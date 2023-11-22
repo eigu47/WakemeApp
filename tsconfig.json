@@ -3,6 +3,12 @@
   "compilerOptions": {
     "strict": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "noUncheckedIndexedAccess": true
-  }
+    "noUncheckedIndexedAccess": true,
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
 }
