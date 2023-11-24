@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Keyboard, StyleSheet, TextInput } from "react-native";
+import { Keyboard, StyleSheet } from "react-native";
 import MapView from "react-native-maps";
 
 import * as Location from "expo-location";
@@ -16,8 +16,8 @@ export default function TabOneScreen() {
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== Location.PermissionStatus.GRANTED) {
         router.push({
           pathname: "/modal",
           params: {
@@ -29,10 +29,10 @@ export default function TabOneScreen() {
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
+      const location = await Location.getCurrentPositionAsync({});
       setLocation(location);
-    })();
-  }, []);
+    })().catch((e) => console.error(e));
+  }, [router]);
 
   return (
     <View style={styles.container}>

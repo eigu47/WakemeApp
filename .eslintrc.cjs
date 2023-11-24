@@ -4,14 +4,24 @@ module.exports = {
     es2021: true,
     node: true,
   },
+  overrides: [
+    {
+      files: ["*.ts", "*.tsx"],
+      parserOptions: {
+        project: "./tsconfig.json",
+      },
+    },
+  ],
   extends: [
+    "universe/native",
+    "universe/shared/typescript-analysis",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:react/recommended",
+    "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
     "plugin:prettier/recommended",
   ],
-  overrides: [],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",
@@ -33,6 +43,7 @@ module.exports = {
       { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
     ],
     "react/no-unknown-property": "off",
-    "no-console": "warn",
+    "no-console": ["warn", { allow: ["warn", "error"] }],
+    "import/order": "off",
   },
 };
