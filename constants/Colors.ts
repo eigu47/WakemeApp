@@ -1,7 +1,7 @@
 const tintColorLight = "#2f95dc";
 const tintColorDark = "#fff";
 
-const THEME: Record<
+const COLORS: Record<
   "light" | "dark",
   {
     text: string;
@@ -27,4 +27,4 @@ const THEME: Record<
   },
 };
 
-export default THEME;
+export default COLORS;

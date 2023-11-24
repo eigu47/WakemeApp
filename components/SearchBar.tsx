@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
-import { Keyboard, StyleSheet } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Keyboard, Pressable, StyleSheet } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 
+import { BlurView } from "expo-blur";
+import { FontAwesome } from "@expo/vector-icons";
+
 import Colors from "../constants/Colors";
+import AnimatedButton from "./AnimatedButton";
 
 export default function SearchBar({
   search,
@@ -11,14 +15,15 @@ export default function SearchBar({
   search: string;
   setSearch: (search: string) => void;
 }) {
-  const [keyboardIsShow, setKeyboardIsShow] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setKeyboardIsShow(true);
+      setIsKeyboardOpen(true);
     });
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardIsShow(false);
+      setIsKeyboardOpen(false);
     });
 
     return () => {
@@ -28,28 +33,70 @@ export default function SearchBar({
   }, []);
 
   return (
-    <TextInput
-      style={styles.input}
-      value={search}
-      onChangeText={setSearch}
-      placeholder="Search"
-      caretHidden={!keyboardIsShow}
-    />
+    <BlurView
+      intensity={100}
+      tint="light"
+      style={[
+        styles.blur,
+        isKeyboardOpen && {
+          borderColor: Colors.light.tint,
+          backgroundColor: Colors.light.background,
+          opacity: 0.8,
+        },
+      ]}
+    >
+      <Pressable style={styles.view} onPress={() => inputRef.current?.focus()}>
+        <TextInput
+          ref={inputRef}
+          style={styles.input}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search"
+          caretHidden={!isKeyboardOpen}
+        />
+        <AnimatedButton
+          onPress={() => {
+            // TODO search
+          }}
+          buttonProps={{ disabled: !isKeyboardOpen || search.trim() === "" }}
+          animatedProps={{
+            style: { ...styles.button, opacity: isKeyboardOpen ? 1 : 0.5 },
+          }}
+        >
+          <FontAwesome name="search" size={24} />
+        </AnimatedButton>
+      </Pressable>
+    </BlurView>
   );
 }
 
 const styles = StyleSheet.create({
-  input: {
+  blur: {
     width: "80%",
-    backgroundColor: "#fff",
     position: "absolute",
-    fontSize: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 10,
-    borderColor: Colors.light.tint,
+    overflow: "hidden",
+    borderColor: "transparent",
+    borderRadius: 20,
     borderWidth: 2,
-    top: 15,
+    top: 10,
     zIndex: 1,
+  },
+  view: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexDirection: "row",
+  },
+  input: {
+    fontSize: 15,
+    flexGrow: 1,
+    paddingLeft: 10,
+    paddingRight: 35,
+    paddingVertical: 2,
+  },
+  button: {
+    position: "absolute",
+    right: 0,
+    flexShrink: 0,
+    marginHorizontal: 6,
   },
 });
