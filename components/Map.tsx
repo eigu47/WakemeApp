@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import MapView, { Marker, type LatLng } from "react-native-maps";
 
 import * as Location from "expo-location";
@@ -55,9 +55,7 @@ export default function Map() {
         ref={mapRef}
         region={region}
         style={styles.map}
-        onPress={Keyboard.dismiss}
         onLongPress={(e) => {
-          Keyboard.dismiss();
           setLocations([
             ...locations,
             { ...e.nativeEvent.coordinate, range: 500 },
@@ -77,7 +75,7 @@ export default function Map() {
         showsMyLocationButton={false}
       >
         {locations.map((loc, i) => (
-          <Marker key={i} coordinate={loc} onPress={() => Keyboard.dismiss()} />
+          <Marker key={i} coordinate={loc} />
         ))}
       </MapView>
       <AnimatedButton

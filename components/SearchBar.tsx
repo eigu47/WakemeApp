@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, Pressable, StyleSheet } from "react-native";
+import { Keyboard, StyleSheet } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 
 import { BlurView } from "expo-blur";
@@ -7,6 +7,7 @@ import { FontAwesome } from "@expo/vector-icons";
 
 import Colors from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
+import { OutsidePress } from "./OutsidePress";
 
 export default function SearchBar({
   search,
@@ -45,7 +46,13 @@ export default function SearchBar({
         },
       ]}
     >
-      <Pressable style={styles.view} onPress={() => inputRef.current?.focus()}>
+      <OutsidePress
+        onOutsidePress={() => {
+          Keyboard.dismiss();
+        }}
+        style={styles.view}
+        onPress={() => inputRef.current?.focus()}
+      >
         <TextInput
           ref={inputRef}
           style={styles.input}
@@ -65,7 +72,7 @@ export default function SearchBar({
         >
           <FontAwesome name="search" size={24} />
         </AnimatedButton>
-      </Pressable>
+      </OutsidePress>
     </BlurView>
   );
 }
