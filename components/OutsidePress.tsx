@@ -11,19 +11,23 @@ import { Pressable } from "react-native";
 
 type EventType = {
   id: string;
-  callback: () => void;
+  callback: (() => void) | null;
   disable: boolean;
 };
 
-type ContextType = {
-  events?: EventType[];
-  addEvent?: (event: EventType) => void;
-  removeEvent?: (id: string) => void;
-  skipId?: string | undefined;
-  setSkipId?: (id: string | undefined) => void;
-};
-
-export const EventContext = createContext<ContextType>({});
+export const EventContext = createContext<{
+  events: EventType[];
+  addEvent: (event: EventType) => void;
+  removeEvent: (id: string) => void;
+  skipId: string | undefined;
+  setSkipId: (id: string | undefined) => void;
+}>({
+  events: [],
+  addEvent: () => {},
+  removeEvent: () => {},
+  skipId: undefined,
+  setSkipId: () => {},
+});
 
 export function OutsidePressProvider({
   children,
@@ -54,10 +58,10 @@ export function OutsidePressProvider({
       <Pressable
         onPressIn={() => {
           let skipped = false;
-          events.forEach(({ id, disable, callback }) => {
+          events.forEach(({ id, callback, disable }) => {
             if (id === skipId || disable) return;
 
-            callback();
+            callback?.();
             skipped = true;
           });
 
@@ -78,24 +82,24 @@ export function OutsidePress({
   ...props
 }: {
   children: React.ReactNode;
-  onOutsidePress: () => void;
+  onOutsidePress: (() => void) | null;
   disable?: boolean;
 } & ComponentProps<typeof Pressable>) {
   const { addEvent, removeEvent, setSkipId } = useContext(EventContext);
   const id = useRef(Math.random().toString()).current;
 
   useEffect(() => {
-    addEvent?.({ id, callback: onOutsidePress, disable });
+    addEvent({ id, callback: onOutsidePress, disable });
 
-    return () => removeEvent?.(id);
-  }, [onOutsidePress, id, disable, addEvent, removeEvent]);
+    return () => removeEvent(id);
+  }, [onOutsidePress, id, addEvent, removeEvent, disable]);
 
   return (
     <Pressable
       {...props}
       onPressIn={(e) => {
         props.onPressIn?.(e);
-        setSkipId?.(id);
+        setSkipId(id);
       }}
     >
       {children}

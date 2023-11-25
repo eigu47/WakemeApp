@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
 import MapView, { Marker, type LatLng } from "react-native-maps";
 
@@ -29,25 +29,27 @@ export default function Map() {
     ...ZOOM,
   };
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== Location.PermissionStatus.GRANTED) {
-        router.push({
-          pathname: "/modal",
-          params: {
-            title: "Error",
-            error: "Permission to access location was denied",
-            body: "Please enable location services in your settings",
-          },
-        });
-        return;
-      }
+  const getLocation = useCallback(async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== Location.PermissionStatus.GRANTED) {
+      router.push({
+        pathname: "/modal",
+        params: {
+          title: "Error",
+          error: "Permission to access location was denied",
+          body: "Please enable location services in your settings",
+        },
+      });
+      return;
+    }
 
-      const location = await Location.getCurrentPositionAsync({});
-      setUserLocation(location);
-    })().catch((e) => console.error(e));
+    const location = await Location.getCurrentPositionAsync();
+    setUserLocation(location);
   }, [router]);
+
+  useEffect(() => {
+    getLocation().catch(console.error);
+  }, [getLocation]);
 
   return (
     <>
@@ -79,10 +81,14 @@ export default function Map() {
         ))}
       </MapView>
       <AnimatedButton
-        onPress={() => mapRef.current?.animateToRegion(region!, 500)}
+        onPress={() => {
+          mapRef.current?.animateToRegion(region!, 500);
+          if (region) return;
+
+          getLocation().catch(console.error);
+        }}
         buttonProps={{
           style: [styles.button, !region && styles.disabled],
-          disabled: !region,
         }}
         animatedProps={{ style: styles.animated }}
       >
@@ -121,6 +127,6 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   disabled: {
-    opacity: 0.3,
+    opacity: 0.6,
   },
 });
