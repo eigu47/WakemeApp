@@ -1,29 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
-import MapView, { Marker, type LatLng } from "react-native-maps";
+import MapView, {
+  Circle,
+  Marker,
+  type LatLng,
+  type Region,
+} from "react-native-maps";
 
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import COLORS from "../constants/Colors";
-import AnimatedButton from "./AnimatedButton";
+import COLORS, { hexToRgb } from "../constants/Colors";
+import MapGps from "./MapGps";
 
 const ZOOM = {
   latitudeDelta: 0.05,
   longitudeDelta: 0.05,
 };
 
-type LocacionType = LatLng & { range: number };
-
-export default function Map() {
+export default function Map({ radius }: { radius: number }) {
   const [userLocation, setUserLocation] = useState<Location.LocationObject>();
-  const [locations, setLocations] = useState<LocacionType[]>([]);
-  const [selectedMarker, setSelectedMarker] = useState<LocacionType>();
+  const [locations, setLocations] = useState<LatLng[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
 
-  const region = userLocation && {
+  const region: Region | undefined = userLocation && {
     latitude: userLocation.coords.latitude,
     longitude: userLocation.coords.longitude,
     ...ZOOM,
@@ -58,10 +60,8 @@ export default function Map() {
         region={region}
         style={styles.map}
         onLongPress={(e) => {
-          setLocations([
-            ...locations,
-            { ...e.nativeEvent.coordinate, range: 500 },
-          ]);
+          setLocations([...locations, e.nativeEvent.coordinate]);
+          setSelectedLocation(e.nativeEvent.coordinate);
           mapRef.current?.animateToRegion(
             {
               latitude: e.nativeEvent.coordinate.latitude,
@@ -77,27 +77,23 @@ export default function Map() {
         showsMyLocationButton={false}
       >
         {locations.map((loc, i) => (
-          <Marker key={i} coordinate={loc} />
+          <Marker
+            key={i}
+            coordinate={loc}
+            onPress={() => setSelectedLocation(loc)}
+            opacity={selectedLocation === loc ? 1 : 0.7}
+          />
         ))}
+        {selectedLocation && (
+          <Circle
+            center={selectedLocation}
+            radius={radius}
+            fillColor={hexToRgb(COLORS.light.tint, 0.15)}
+            strokeColor={hexToRgb(COLORS.light.tint, 0.5)}
+          />
+        )}
       </MapView>
-      <AnimatedButton
-        onPress={() => {
-          mapRef.current?.animateToRegion(region!, 500);
-          if (region) return;
-
-          getLocation().catch(console.error);
-        }}
-        buttonProps={{
-          style: [styles.button, !region && styles.disabled],
-        }}
-        animatedProps={{ style: styles.animated }}
-      >
-        <MaterialCommunityIcons
-          style={styles.icon}
-          name="crosshairs-gps"
-          size={25}
-        />
-      </AnimatedButton>
+      <MapGps mapRef={mapRef} region={region} getLocation={getLocation} />
     </>
   );
 }
@@ -106,27 +102,5 @@ const styles = StyleSheet.create({
   map: {
     width: "100%",
     height: "100%",
-  },
-  animated: {
-    position: "absolute",
-    bottom: 15,
-    right: 15,
-  },
-  button: {
-    backgroundColor: COLORS.light.background,
-    borderRadius: 50,
-    borderColor: "rgba(0, 0, 0, 0.4)",
-    borderWidth: 1,
-    width: 40,
-    height: 40,
-    opacity: 0.8,
-  },
-  icon: {
-    textAlign: "center",
-    textAlignVertical: "center",
-    height: "100%",
-  },
-  disabled: {
-    opacity: 0.6,
   },
 });
