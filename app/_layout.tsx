@@ -2,7 +2,12 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { useFonts } from "expo-font";
+import {
+  setBackgroundColorAsync,
+  setButtonStyleAsync,
+} from "expo-navigation-bar";
 import { SplashScreen, Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 
@@ -44,6 +49,9 @@ export default function RootLayout() {
     return null;
   }
 
+  setBackgroundColorAsync(COLORS.background).catch(console.error);
+  setButtonStyleAsync("dark").catch(console.error);
+
   return <RootLayoutNav />;
 }
 
@@ -51,6 +59,7 @@ function RootLayoutNav() {
   return (
     <OutsidePressProvider>
       <SafeAreaProvider>
+        <StatusBar style="dark" />
         <ThemeProvider
           value={{
             ...DarkTheme,

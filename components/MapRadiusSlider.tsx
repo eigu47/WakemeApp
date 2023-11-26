@@ -2,7 +2,6 @@ import { StyleSheet } from "react-native";
 
 import Slider from "@react-native-community/slider";
 
-import { COLORS } from "../constants/Colors";
 import { Text, View } from "./Themed";
 
 export default function MapRadiusSlider({
@@ -24,14 +23,11 @@ export default function MapRadiusSlider({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   radius: {
-    position: "absolute",
-    top: 100,
-    right: 20,
     width: "40%",
     height: 40,
-    backgroundColor: COLORS.background,
     borderRadius: 10,
   },
 });

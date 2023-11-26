@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Keyboard, StyleSheet } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 
-import { BlurView } from "expo-blur";
 import { FontAwesome } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
@@ -34,61 +33,50 @@ export default function SearchBar({
   }, []);
 
   return (
-    <BlurView
-      intensity={100}
-      tint="light"
+    <OutsidePress
+      onOutsidePress={() => {
+        Keyboard.dismiss();
+      }}
       style={[
-        styles.blur,
+        styles.view,
         isKeyboardOpen && {
-          borderColor: COLORS.primary,
-          backgroundColor: COLORS.background,
-          opacity: 0.8,
+          // borderColor: COLORS.primary,
+          backgroundColor: COLORS.foreground,
         },
       ]}
+      onTouchStart={() => inputRef.current?.focus()}
     >
-      <OutsidePress
-        onOutsidePress={() => {
-          Keyboard.dismiss();
+      <TextInput
+        ref={inputRef}
+        style={styles.input}
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Search"
+        caretHidden={!isKeyboardOpen}
+      />
+      <AnimatedButton
+        onPress={() => {
+          //
         }}
-        style={styles.view}
-        onPress={() => inputRef.current?.focus()}
+        // buttonProps={{ disabled: !isKeyboardOpen || search.trim() === "" }}
+        animatedProps={{
+          style: { ...styles.button, opacity: isKeyboardOpen ? 1 : 0.5 },
+        }}
       >
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search"
-          caretHidden={!isKeyboardOpen}
-        />
-        <AnimatedButton
-          onPress={() => {
-            // TODO search
-          }}
-          buttonProps={{ disabled: !isKeyboardOpen || search.trim() === "" }}
-          animatedProps={{
-            style: { ...styles.button, opacity: isKeyboardOpen ? 1 : 0.5 },
-          }}
-        >
-          <FontAwesome name="search" size={24} />
-        </AnimatedButton>
-      </OutsidePress>
-    </BlurView>
+        <FontAwesome name="search" size={24} />
+      </AnimatedButton>
+    </OutsidePress>
   );
 }
 
 const styles = StyleSheet.create({
-  blur: {
-    width: "80%",
-    position: "absolute",
-    overflow: "hidden",
-    borderColor: "transparent",
-    borderRadius: 20,
-    borderWidth: 2,
-    top: 10,
-    zIndex: 1,
-  },
   view: {
+    width: "90%",
+    overflow: "hidden",
+    borderColor: COLORS.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    top: 10,
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",

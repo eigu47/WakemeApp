@@ -7,7 +7,7 @@ import {
   useState,
   type ComponentProps,
 } from "react";
-import { Pressable } from "react-native";
+import { View } from "react-native";
 
 type EventType = {
   id: string;
@@ -15,17 +15,20 @@ type EventType = {
   disable: boolean;
 };
 
+declare global {
+  // eslint-disable-next-line no-var
+  var skipEventId: string | undefined;
+}
+
 export const EventContext = createContext<{
   events: EventType[];
   addEvent: (event: EventType) => void;
   removeEvent: (id: string) => void;
-  skipId: string | undefined;
   setSkipId: (id: string | undefined) => void;
 }>({
   events: [],
   addEvent: () => {},
   removeEvent: () => {},
-  skipId: undefined,
   setSkipId: () => {},
 });
 
@@ -35,7 +38,9 @@ export function OutsidePressProvider({
   children: React.ReactNode;
 }) {
   const [events, setEvents] = useState<EventType[]>([]);
-  const [skipId, setSkipId] = useState<string | undefined>(undefined);
+  function setSkipId(id?: string) {
+    global.skipEventId = id;
+  }
 
   const addEvent = useCallback((event: EventType) => {
     setEvents((prev) => [...prev, event]);
@@ -49,28 +54,25 @@ export function OutsidePressProvider({
     <EventContext.Provider
       value={{
         events,
-        skipId,
         setSkipId,
         addEvent,
         removeEvent,
       }}
     >
-      <Pressable
-        onPressIn={() => {
-          let skipped = false;
+      <View
+        onTouchStart={() => {
+          const skipId = global.skipEventId;
           events.forEach(({ id, callback, disable }) => {
             if (id === skipId || disable) return;
 
             callback?.();
-            skipped = true;
           });
-
-          skipped && setSkipId(undefined);
+          if (skipId) setSkipId(undefined);
         }}
         style={{ flex: 1 }}
       >
         {children}
-      </Pressable>
+      </View>
     </EventContext.Provider>
   );
 }
@@ -84,7 +86,7 @@ export function OutsidePress({
   children: React.ReactNode;
   onOutsidePress: (() => void) | null;
   disable?: boolean;
-} & ComponentProps<typeof Pressable>) {
+} & ComponentProps<typeof View>) {
   const { addEvent, removeEvent, setSkipId } = useContext(EventContext);
   const id = useRef(Math.random().toString()).current;
 
@@ -95,14 +97,14 @@ export function OutsidePress({
   }, [onOutsidePress, id, addEvent, removeEvent, disable]);
 
   return (
-    <Pressable
+    <View
       {...props}
-      onPressIn={(e) => {
-        props.onPressIn?.(e);
+      onTouchStart={(e) => {
+        props.onTouchStart?.(e);
         setSkipId(id);
       }}
     >
       {children}
-    </Pressable>
+    </View>
   );
 }
