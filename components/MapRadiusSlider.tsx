@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 
 import Slider from "@react-native-community/slider";
 
-import COLORS from "../constants/Colors";
+import { COLORS } from "../constants/Colors";
 import { Text, View } from "./Themed";
 
 export default function MapRadiusSlider({

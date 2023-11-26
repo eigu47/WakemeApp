@@ -5,7 +5,7 @@ import { TextInput } from "react-native-gesture-handler";
 import { BlurView } from "expo-blur";
 import { FontAwesome } from "@expo/vector-icons";
 
-import Colors from "../constants/Colors";
+import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 
@@ -40,8 +40,8 @@ export default function SearchBar({
       style={[
         styles.blur,
         isKeyboardOpen && {
-          borderColor: Colors.light.tint,
-          backgroundColor: Colors.light.background,
+          borderColor: COLORS.light.tint,
+          backgroundColor: COLORS.light.background,
           opacity: 0.8,
         },
       ]}

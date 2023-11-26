@@ -17,11 +17,7 @@ export default function ModalScreen() {
       <Stack.Screen options={{ title }} />
       <View style={styles.container}>
         <Text style={styles.title}>{error}</Text>
-        <View
-          style={styles.separator}
-          lightColor="#eee"
-          darkColor="rgba(255,255,255,0.1)"
-        />
+        <View style={styles.separator} />
         <Text style={styles.body}>{body}</Text>
 
         {/* Use a light status bar on iOS to account for the black space above the modal */}

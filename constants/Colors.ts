@@ -1,43 +1,66 @@
-const tintColorLight = "#2f95dc";
-const tintColorDark = "#fff";
+import { useColorScheme } from "react-native";
 
-const COLORS: Record<
-  "light" | "dark",
-  {
-    text: string;
-    background: string;
-    tint: string;
-    tabIconDefault: string;
-    tabIconSelected: string;
-  }
-> = {
+export const COLORS = {
   light: {
-    text: "#000",
-    background: "#fff",
-    tint: tintColorLight,
-    tabIconDefault: "#ccc",
-    tabIconSelected: tintColorLight,
+    background: "#ffffff",
+    foreground: "#020817",
+    card: "#ffffff",
+    cardForeground: "#020817",
+    popover: "#ffffff",
+    popoverForeground: "#020817",
+    primary: "#2563eb",
+    primaryForeground: "#f8fafc",
+    secondary: "#f1f5f9",
+    secondaryForeground: "#0f172a",
+    muted: "#f1f5f9",
+    mutedForeground: "#64748b",
+    accent: "#f1f5f9",
+    accentForeground: "#0f172a",
+    destructive: "#ef4444",
+    destructiveForeground: "#f8fafc",
+    border: "#e2e8f0",
+    input: "#e2e8f0",
+    ring: "#2563eb",
   },
   dark: {
-    text: "#fff",
-    background: "#000",
-    tint: tintColorDark,
-    tabIconDefault: "#ccc",
-    tabIconSelected: tintColorDark,
+    background: "#020817",
+    foreground: "#f8fafc",
+    card: "#020817",
+    cardForeground: "#f8fafc",
+    popover: "#020817",
+    popoverForeground: "#f8fafc",
+    primary: "#3b82f6",
+    primaryForeground: "#0f172a",
+    secondary: "#1e293b",
+    secondaryForeground: "#f8fafc",
+    muted: "#1e293b",
+    mutedForeground: "#94a3b8",
+    accent: "#1e293b",
+    accentForeground: "#f8fafc",
+    destructive: "#7f1d1d",
+    destructiveForeground: "#f8fafc",
+    border: "#1e293b",
+    input: "#1e293b",
+    ring: "#1d4ed8",
   },
 };
 
-export default COLORS;
+export type ColorSchema = (typeof COLORS)[keyof typeof COLORS];
 
-export function getColor(
-  theme: keyof typeof COLORS,
-  color: keyof typeof COLORS.light,
-) {
-  return COLORS[theme][color];
+export function useGetColor(color: keyof ColorSchema): string;
+export function useGetColor(): ColorSchema;
+export function useGetColor(color?: keyof ColorSchema) {
+  const theme = useColorScheme() ?? "light";
+
+  if (color) {
+    return COLORS[theme][color];
+  }
+
+  return COLORS[theme];
 }
 
 export function hexToRgb(hex: string, alpha?: number) {
-  if (hex.length !== 7) {
+  if (hex.length !== 7 || !hex.startsWith("#")) {
     return "rgb(0,0,0)";
   }
 
