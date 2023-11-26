@@ -3,16 +3,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-import { useGetColor } from "../../constants/Colors";
+import { COLORS } from "../../constants/Colors";
 
 export default function TabLayout() {
-  const { primary } = useGetColor();
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: primary,
+          tabBarActiveTintColor: COLORS.primary,
           tabBarShowLabel: false,
         }}
       >

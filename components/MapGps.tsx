@@ -5,7 +5,7 @@ import { type Region } from "react-native-maps";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { useGetColor } from "../constants/Colors";
+import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 
 export default function MapGps({
@@ -17,8 +17,6 @@ export default function MapGps({
   region?: Region;
   getLocation: () => Promise<void>;
 }) {
-  const { foreground, secondaryForeground } = useGetColor();
-
   return (
     <AnimatedButton
       onPress={() => {
@@ -30,12 +28,7 @@ export default function MapGps({
         getLocation().catch(console.error);
       }}
       buttonProps={{
-        style: [
-          styles.button,
-          { backgroundColor: foreground },
-          { borderColor: secondaryForeground },
-          !region && styles.disabled,
-        ],
+        style: [styles.button, !region && styles.disabled],
       }}
       animatedProps={{ style: styles.animated }}
     >
@@ -55,6 +48,8 @@ const styles = StyleSheet.create({
     right: 15,
   },
   button: {
+    backgroundColor: COLORS.foreground,
+    borderColor: COLORS.muted,
     borderRadius: 50,
     borderWidth: 1,
     width: 40,

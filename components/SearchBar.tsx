@@ -40,8 +40,8 @@ export default function SearchBar({
       style={[
         styles.blur,
         isKeyboardOpen && {
-          borderColor: COLORS.light.tint,
-          backgroundColor: COLORS.light.background,
+          borderColor: COLORS.primary,
+          backgroundColor: COLORS.background,
           opacity: 0.8,
         },
       ]}

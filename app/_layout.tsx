@@ -1,17 +1,13 @@
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 
 import { OutsidePressProvider } from "../components/OutsidePress";
+import { COLORS } from "../constants/Colors";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -52,13 +48,20 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
     <OutsidePressProvider>
       <SafeAreaProvider>
         <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          value={{
+            ...DarkTheme,
+            colors: {
+              ...DarkTheme.colors,
+              primary: COLORS.primary,
+              background: COLORS.background,
+              text: COLORS.foreground,
+              notification: COLORS.destructive,
+            },
+          }}
         >
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

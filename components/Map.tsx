@@ -10,7 +10,7 @@ import MapView, {
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 
-import { COLORS, hexToRgb, useGetColor } from "../constants/Colors";
+import { COLORS, hexToRgb } from "../constants/Colors";
 import MapGps from "./MapGps";
 
 const ZOOM = {
@@ -22,7 +22,6 @@ export default function Map({ radius }: { radius: number }) {
   const [userLocation, setUserLocation] = useState<Location.LocationObject>();
   const [locations, setLocations] = useState<LatLng[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
-  const { primary, ring } = useGetColor();
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
 
@@ -89,8 +88,8 @@ export default function Map({ radius }: { radius: number }) {
           <Circle
             center={selectedLocation}
             radius={radius}
-            fillColor={hexToRgb(primary, 0.15)}
-            strokeColor={hexToRgb(ring, 0.5)}
+            fillColor={hexToRgb(COLORS.primary, 0.15)}
+            strokeColor={hexToRgb(COLORS.ring, 0.5)}
           />
         )}
       </MapView>
