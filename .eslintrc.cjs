@@ -20,7 +20,7 @@ module.exports = {
     "plugin:react/recommended",
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
-    // "plugin:prettier/recommended",
+    "plugin:prettier/recommended",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -44,5 +44,11 @@ module.exports = {
     ],
     "no-console": ["warn", { allow: ["warn", "error"] }],
     "import/order": "off",
+    "prettier/prettier": [
+      "warn",
+      {
+        endOfLine: "auto",
+      },
+    ],
   },
 };
