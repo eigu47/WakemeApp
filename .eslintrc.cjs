@@ -44,11 +44,6 @@ module.exports = {
     ],
     "no-console": ["warn", { allow: ["warn", "error"] }],
     "import/order": "off",
-    "prettier/prettier": [
-      "warn",
-      {
-        endOfLine: "auto",
-      },
-    ],
+    "prettier/prettier": "off",
   },
 };

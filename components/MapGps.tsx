@@ -27,10 +27,7 @@ export default function MapGps({
 
         getLocation().catch(console.error);
       }}
-      buttonProps={{
-        style: [styles.button, !region && styles.disabled],
-      }}
-      animatedProps={{ style: styles.animated }}
+      style={[styles.button, !region && styles.disabled]}
     >
       <MaterialCommunityIcons
         style={styles.icon}
@@ -42,12 +39,10 @@ export default function MapGps({
 }
 
 const styles = StyleSheet.create({
-  animated: {
+  button: {
     position: "absolute",
     bottom: 15,
     right: 15,
-  },
-  button: {
     backgroundColor: COLORS.foreground,
     borderColor: COLORS.muted,
     borderRadius: 50,

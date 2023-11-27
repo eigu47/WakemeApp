@@ -40,7 +40,7 @@ export default function SearchBar({
       style={[
         styles.view,
         isKeyboardOpen && {
-          // borderColor: COLORS.primary,
+          borderColor: COLORS.primary,
           backgroundColor: COLORS.foreground,
         },
       ]}
@@ -58,10 +58,8 @@ export default function SearchBar({
         onPress={() => {
           //
         }}
-        // buttonProps={{ disabled: !isKeyboardOpen || search.trim() === "" }}
-        animatedProps={{
-          style: { ...styles.button, opacity: isKeyboardOpen ? 1 : 0.5 },
-        }}
+        style={{ ...styles.button, opacity: isKeyboardOpen ? 1 : 0.5 }}
+        disabled={!isKeyboardOpen || search.trim() === ""}
       >
         <FontAwesome name="search" size={24} />
       </AnimatedButton>
@@ -71,7 +69,6 @@ export default function SearchBar({
 
 const styles = StyleSheet.create({
   view: {
-    width: "90%",
     overflow: "hidden",
     borderColor: COLORS.background,
     borderRadius: 10,
