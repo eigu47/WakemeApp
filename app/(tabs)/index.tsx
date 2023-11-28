@@ -44,10 +44,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: "5%",
     gap: 15,
     paddingBottom: 8,
-    backgroundColor: hexToRgb(COLORS.foreground, 0.8),
+    backgroundColor: hexToRgb(COLORS.background, 0.8),
   },
   barButton: {
     width: "100%",
     backgroundColor: "transparent",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    position: "relative",
   },
 });

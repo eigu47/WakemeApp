@@ -59,7 +59,7 @@ function RootLayoutNav() {
   return (
     <OutsidePressProvider>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <ThemeProvider
           value={{
             ...DarkTheme,

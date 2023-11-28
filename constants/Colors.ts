@@ -1,8 +1,7 @@
 export const COLORS = {
-  background: "#020817",
+  background: "#0f172a",
   foreground: "#f8fafc",
   primary: "#3b82f6",
-  primaryForeground: "#0f172a",
   secondary: "#1e293b",
   muted: "#94a3b8",
   destructive: "#7f1d1d",

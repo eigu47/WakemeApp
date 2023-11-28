@@ -4,7 +4,7 @@ import { TextInput } from "react-native-gesture-handler";
 
 import { FontAwesome } from "@expo/vector-icons";
 
-import { COLORS } from "../constants/Colors";
+import { COLORS, hexToRgb } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 
@@ -63,8 +63,8 @@ export default function MapSearchBar({
 
 const styles = StyleSheet.create({
   view: {
-    overflow: "hidden",
-    borderColor: COLORS.background,
+    borderColor: "transparent",
+    backgroundColor: hexToRgb(COLORS.foreground, 0.8),
     borderRadius: 10,
     borderWidth: 1,
     top: 10,

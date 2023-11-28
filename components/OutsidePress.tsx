@@ -81,14 +81,18 @@ export function OutsidePress({
   children,
   onOutsidePress,
   disable = false,
+  id: sharedId,
   ...props
 }: {
   children: React.ReactNode;
   onOutsidePress: (() => void) | null;
+  id?: string;
   disable?: boolean;
 } & ComponentProps<typeof View>) {
   const { addEvent, removeEvent, setSkipId } = useContext(EventContext);
-  const id = useRef(Math.random().toString()).current;
+  const uniqueId = useRef(Math.random().toString()).current;
+
+  const id = sharedId ?? uniqueId;
 
   useEffect(() => {
     addEvent({ id, callback: onOutsidePress, disable });

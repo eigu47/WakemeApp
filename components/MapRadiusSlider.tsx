@@ -11,6 +11,7 @@ import Slider from "@react-native-community/slider";
 
 import { COLORS } from "../constants/Colors";
 import { AnimatedPressable } from "./AnimatedButton";
+import { OutsidePress } from "./OutsidePress";
 import { Text } from "./Themed";
 
 export default function MapRadiusSlider({
@@ -24,15 +25,23 @@ export default function MapRadiusSlider({
   const animate = useSharedValue(0);
 
   const animatedSlide = useAnimatedStyle(() => ({
-    height: animate.value * 50,
+    height: animate.value * 45,
     opacity: animate.value,
-    top: -10 + animate.value * 10,
   }));
 
   const animatedView = useAnimatedStyle(() => ({
-    borderBottomLeftRadius: 5 - animate.value * 5,
-    borderBottomRightRadius: 5 - animate.value * 5,
+    height: 30 + animate.value * 50,
   }));
+
+  function closeSlider() {
+    if (isShow) {
+      setIsShow(false);
+      animate.value = withTiming(0, {
+        duration: 150,
+        easing: Easing.inOut(Easing.cubic),
+      });
+    }
+  }
 
   return (
     <>
@@ -46,40 +55,55 @@ export default function MapRadiusSlider({
           });
         }}
       >
-        <Text style={styles.text}>Range: {radius}</Text>
+        <OutsidePress id="slider" onOutsidePress={closeSlider}>
+          <Text style={styles.text}>Range: {radius}</Text>
+        </OutsidePress>
       </AnimatedPressable>
-      <Animated.View style={[styles.sliderAnimated, animatedSlide]}>
-        <Slider
-          minimumValue={100}
-          maximumValue={5000}
-          value={radius}
-          onValueChange={setRadius}
-          style={styles.slider}
-        />
-      </Animated.View>
+      <OutsidePress
+        id="slider"
+        onOutsidePress={closeSlider}
+        style={styles.sliderPress}
+      >
+        <Animated.View style={[styles.sliderAnimated, animatedSlide]}>
+          <Slider
+            minimumValue={100}
+            maximumValue={5000}
+            value={radius}
+            step={100}
+            onValueChange={setRadius}
+            style={styles.slider}
+            thumbTintColor={COLORS.primary}
+            maximumTrackTintColor={COLORS.primary}
+            minimumTrackTintColor={COLORS.primary}
+          />
+        </Animated.View>
+      </OutsidePress>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 5,
+    borderRadius: 10,
     width: "40%",
-    backgroundColor: COLORS.muted,
-    zIndex: 1,
+    backgroundColor: COLORS.background,
   },
   text: {
-    height: 35,
     textAlign: "center",
     textAlignVertical: "center",
+    top: 5,
+  },
+  sliderPress: {
+    width: "100%",
+    borderRadius: 10,
+    position: "absolute",
+    top: 35,
+    overflow: "hidden",
   },
   sliderAnimated: {
-    borderRadius: 10,
-    backgroundColor: COLORS.muted,
-    borderTopLeftRadius: 0,
+    backgroundColor: COLORS.background,
   },
   slider: {
     height: "100%",
-    top: 3,
   },
 });
