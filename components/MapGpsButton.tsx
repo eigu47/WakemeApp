@@ -8,7 +8,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 
-export default function MapGps({
+export default function MapGpsButton({
   mapRef,
   region,
   getLocation,

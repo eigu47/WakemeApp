@@ -11,7 +11,7 @@ import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import MapGps from "./MapGps";
+import MapGpsButton from "./MapGpsButton";
 
 const ZOOM = {
   latitudeDelta: 0.05,
@@ -93,7 +93,7 @@ export default function Map({ radius }: { radius: number }) {
           />
         )}
       </MapView>
-      <MapGps mapRef={mapRef} region={region} getLocation={getLocation} />
+      <MapGpsButton mapRef={mapRef} region={region} getLocation={getLocation} />
     </>
   );
 }

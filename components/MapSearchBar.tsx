@@ -8,7 +8,7 @@ import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 
-export default function SearchBar({
+export default function MapSearchBar({
   search,
   setSearch,
 }: {
@@ -37,13 +37,7 @@ export default function SearchBar({
       onOutsidePress={() => {
         Keyboard.dismiss();
       }}
-      style={[
-        styles.view,
-        isKeyboardOpen && {
-          borderColor: COLORS.primary,
-          backgroundColor: COLORS.foreground,
-        },
-      ]}
+      style={[styles.view, isKeyboardOpen && styles.onKeyOpen]}
       onTouchStart={() => inputRef.current?.focus()}
     >
       <TextInput
@@ -77,6 +71,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
+  },
+  onKeyOpen: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.foreground,
   },
   input: {
     fontSize: 15,

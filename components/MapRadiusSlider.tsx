@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { StyleSheet } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -25,65 +26,60 @@ export default function MapRadiusSlider({
   const animatedSlide = useAnimatedStyle(() => ({
     height: animate.value * 50,
     opacity: animate.value,
-    top: -15 + animate.value * 15,
+    top: -10 + animate.value * 10,
   }));
 
   const animatedView = useAnimatedStyle(() => ({
-    borderBottomLeftRadius: 10 - animate.value * 10,
-    borderBottomRightRadius: 10 - animate.value * 10,
+    borderBottomLeftRadius: 5 - animate.value * 5,
+    borderBottomRightRadius: 5 - animate.value * 5,
   }));
 
   return (
     <>
       <AnimatedPressable
-        style={[
-          {
-            borderRadius: 10,
-            width: "40%",
-            backgroundColor: COLORS.muted,
-            zIndex: 1,
-          },
-          animatedView,
-        ]}
+        style={[styles.button, animatedView]}
         onPress={() => {
           setIsShow((prev) => !prev);
           animate.value = withTiming(isShow ? 0 : 1, {
-            duration: 100,
+            duration: 150,
             easing: Easing.inOut(Easing.cubic),
           });
         }}
       >
-        <Text
-          style={{
-            height: 35,
-            textAlign: "center",
-            textAlignVertical: "center",
-          }}
-        >
-          Range: {~~radius}
-        </Text>
+        <Text style={styles.text}>Range: {radius}</Text>
       </AnimatedPressable>
-      <Animated.View
-        style={[
-          {
-            borderRadius: 10,
-            backgroundColor: COLORS.muted,
-            borderTopLeftRadius: 0,
-          },
-          animatedSlide,
-        ]}
-      >
+      <Animated.View style={[styles.sliderAnimated, animatedSlide]}>
         <Slider
           minimumValue={100}
           maximumValue={5000}
           value={radius}
           onValueChange={setRadius}
-          style={{
-            height: "100%",
-            top: 3,
-          }}
+          style={styles.slider}
         />
       </Animated.View>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    borderRadius: 5,
+    width: "40%",
+    backgroundColor: COLORS.muted,
+    zIndex: 1,
+  },
+  text: {
+    height: 35,
+    textAlign: "center",
+    textAlignVertical: "center",
+  },
+  sliderAnimated: {
+    borderRadius: 10,
+    backgroundColor: COLORS.muted,
+    borderTopLeftRadius: 0,
+  },
+  slider: {
+    height: "100%",
+    top: 3,
+  },
+});
