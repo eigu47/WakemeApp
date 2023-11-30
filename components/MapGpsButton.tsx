@@ -1,4 +1,4 @@
-import { type RefObject } from "react";
+import { useContext, type RefObject } from "react";
 import { StyleSheet } from "react-native";
 import type MapView from "react-native-maps";
 import { type Region } from "react-native-maps";
@@ -7,16 +7,17 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
+import { MapContext } from "./MapContext";
 
 export default function MapGpsButton({
   mapRef,
   region,
-  getLocation,
 }: {
   mapRef: RefObject<MapView>;
   region?: Region;
-  getLocation: () => Promise<void>;
 }) {
+  const { getLocation } = useContext(MapContext);
+
   return (
     <AnimatedButton
       onPress={() => {

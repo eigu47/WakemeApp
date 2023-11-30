@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {
   Easing,
@@ -11,16 +11,13 @@ import Slider from "@react-native-community/slider";
 
 import { COLORS } from "../constants/Colors";
 import { AnimatedPressable } from "./AnimatedButton";
+import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 import { Text } from "./Themed";
 
-export default function MapRadiusSlider({
-  radius,
-  setRadius,
-}: {
-  radius: number;
-  setRadius: (radius: number) => void;
-}) {
+export default function MapRadiusSlider() {
+  const { radius, setRadius } = useContext(MapContext);
+
   const [isShow, setIsShow] = useState(false);
   const animate = useSharedValue(0);
 

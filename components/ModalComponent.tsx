@@ -1,30 +1,26 @@
+import { useContext, useState } from "react";
 import { Button, Modal, StyleSheet } from "react-native";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
+import { MapContext } from "./MapContext";
 import { Text, View } from "./Themed";
 
-export default function ModalComponent({
-  show,
-  loading,
-  onPress,
-}: {
-  show: boolean;
-  loading: boolean;
-  onPress: () => void;
-}) {
+export default function ModalComponent() {
+  const { getLocation, userLocation } = useContext(MapContext);
+
+  const [loading, setLoading] = useState(false);
+
   return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={show}
-      // onRequestClose={onClose}
-    >
+    <Modal animationType="fade" transparent visible={!userLocation}>
       <View style={[styles.container]}>
         <View style={styles.modal}>
           <Text>Permission to access location was denied</Text>
           <Button
             title={loading ? "Loading..." : "Try again"}
-            onPress={onPress}
+            onPress={() => {
+              setLoading(true);
+              getLocation().catch(console.error);
+            }}
             disabled={loading}
           />
         </View>

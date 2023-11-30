@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
 import MapView, {
   Circle,
@@ -7,9 +7,8 @@ import MapView, {
   type Region,
 } from "react-native-maps";
 
-import { type LocationObject } from "expo-location";
-
 import { COLORS, hexToRgb } from "../constants/Colors";
+import { MapContext } from "./MapContext";
 import MapGpsButton from "./MapGpsButton";
 
 const ZOOM = {
@@ -17,15 +16,9 @@ const ZOOM = {
   longitudeDelta: 0.05,
 };
 
-export default function Map({
-  radius,
-  userLocation,
-  getLocation,
-}: {
-  radius: number;
-  userLocation?: LocationObject;
-  getLocation: () => Promise<void>;
-}) {
+export default function Map() {
+  const { radius, userLocation } = useContext(MapContext);
+
   const [locations, setLocations] = useState<LatLng[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const mapRef = useRef<MapView>(null);
@@ -70,13 +63,13 @@ export default function Map({
         {selectedLocation && (
           <Circle
             center={selectedLocation}
-            radius={radius}
+            radius={radius ?? 0}
             fillColor={hexToRgb(COLORS.primary, 0.15)}
             strokeColor={hexToRgb(COLORS.ring, 0.5)}
           />
         )}
       </MapView>
-      <MapGpsButton mapRef={mapRef} region={region} getLocation={getLocation} />
+      <MapGpsButton mapRef={mapRef} region={region} />
     </>
   );
 }

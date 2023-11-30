@@ -1,16 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Keyboard, StyleSheet, type TextInput } from "react-native";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
+import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 
-export default function MapSearchBar({
-  setSearch,
-}: {
-  setSearch: (search: string) => void;
-}) {
-  //
+export default function MapSearchBar() {
+  const { setSearch } = useContext(MapContext);
+
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
