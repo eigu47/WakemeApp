@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet } from "react-native";
 import MapView, {
   Circle,
@@ -7,8 +7,7 @@ import MapView, {
   type Region,
 } from "react-native-maps";
 
-import * as Location from "expo-location";
-import { useRouter } from "expo-router";
+import { type LocationObject } from "expo-location";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
 import MapGpsButton from "./MapGpsButton";
@@ -18,40 +17,24 @@ const ZOOM = {
   longitudeDelta: 0.05,
 };
 
-export default function Map({ radius }: { radius: number }) {
-  const [userLocation, setUserLocation] = useState<Location.LocationObject>();
+export default function Map({
+  radius,
+  userLocation,
+  getLocation,
+}: {
+  radius: number;
+  userLocation?: LocationObject;
+  getLocation: () => Promise<void>;
+}) {
   const [locations, setLocations] = useState<LatLng[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const mapRef = useRef<MapView>(null);
-  const router = useRouter();
 
   const region: Region | undefined = userLocation && {
     latitude: userLocation.coords.latitude,
     longitude: userLocation.coords.longitude,
     ...ZOOM,
   };
-
-  const getLocation = useCallback(async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== Location.PermissionStatus.GRANTED) {
-      router.push({
-        pathname: "/modal",
-        params: {
-          title: "Error",
-          error: "Permission to access location was denied",
-          body: "Please enable location services in your settings",
-        },
-      });
-      return;
-    }
-
-    const location = await Location.getCurrentPositionAsync();
-    setUserLocation(location);
-  }, [router]);
-
-  useEffect(() => {
-    getLocation().catch(console.error);
-  }, [getLocation]);
 
   return (
     <>

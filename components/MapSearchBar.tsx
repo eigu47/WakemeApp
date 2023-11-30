@@ -1,20 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, StyleSheet } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
-
-import { FontAwesome } from "@expo/vector-icons";
+import { Keyboard, StyleSheet, type TextInput } from "react-native";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar({
-  search,
   setSearch,
 }: {
-  search: string;
   setSearch: (search: string) => void;
 }) {
+  //
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
@@ -37,56 +33,60 @@ export default function MapSearchBar({
       onOutsidePress={() => {
         Keyboard.dismiss();
       }}
-      style={[styles.view, isKeyboardOpen && styles.onKeyOpen]}
+      style={styles.view}
       onTouchStart={() => inputRef.current?.focus()}
     >
-      <TextInput
-        ref={inputRef}
-        style={styles.input}
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Search"
-        caretHidden={!isKeyboardOpen}
-      />
-      <AnimatedButton
-        onPress={() => {
-          //
+      <GooglePlacesAutocomplete
+        query={{
+          key: process.env.EXPO_PUBLIC_MAPS_API,
+          rankby: "distance",
+          components: "country:jp",
         }}
-        style={{ ...styles.button, opacity: isKeyboardOpen ? 1 : 0.5 }}
-        disabled={!isKeyboardOpen || search.trim() === ""}
-      >
-        <FontAwesome name="search" size={24} />
-      </AnimatedButton>
+        placeholder="Search"
+        enablePoweredByContainer={false}
+        styles={{
+          container: {
+            position: "relative",
+          },
+          textInput: {
+            backgroundColor: isKeyboardOpen
+              ? COLORS.foreground
+              : hexToRgb(COLORS.foreground, 0.8),
+            borderRadius: 10,
+            height: "auto",
+            overflow: "hidden",
+          },
+          row: {
+            borderRadius: 10,
+            backgroundColor: "transparent",
+          },
+          listView: {
+            position: "absolute",
+            top: "100%",
+            borderRadius: 10,
+            backgroundColor: hexToRgb(COLORS.foreground),
+            borderColor: hexToRgb(COLORS.background, 0.3),
+            borderWidth: 1,
+          },
+          separator: {
+            height: 1,
+            backgroundColor: hexToRgb(COLORS.background, 0.1),
+          },
+        }}
+        onPress={(data) => setSearch(data.place_id)}
+      />
     </OutsidePress>
   );
 }
 
 const styles = StyleSheet.create({
   view: {
-    borderColor: "transparent",
-    backgroundColor: hexToRgb(COLORS.foreground, 0.8),
-    borderRadius: 10,
-    borderWidth: 1,
-    top: 10,
-    alignItems: "center",
-    justifyContent: "space-between",
+    marginTop: 10,
     flexDirection: "row",
+    zIndex: 1,
   },
   onKeyOpen: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.foreground,
-  },
-  input: {
-    fontSize: 15,
-    flexGrow: 1,
-    paddingLeft: 10,
-    paddingRight: 35,
-    paddingVertical: 2,
-  },
-  button: {
-    position: "absolute",
-    right: 0,
-    flexShrink: 0,
-    marginHorizontal: 6,
   },
 });
