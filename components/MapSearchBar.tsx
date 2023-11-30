@@ -1,35 +1,21 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useRef } from "react";
 import { Keyboard, StyleSheet } from "react-native";
 import {
   GooglePlacesAutocomplete,
   type GooglePlacesAutocompleteRef,
 } from "react-native-google-places-autocomplete";
 
+import { Fontisto } from "@expo/vector-icons";
+
 import { COLORS, hexToRgb } from "../constants/Colors";
 import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const { searchPlaceById, userAddress } = useContext(MapContext);
+  const { searchPlaceById, countryCode, isKeyboardOpen } =
+    useContext(MapContext);
 
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const inputRef = useRef<GooglePlacesAutocompleteRef>(null);
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setIsKeyboardOpen(true);
-    });
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setIsKeyboardOpen(false);
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  const countryCode = userAddress?.country?.short_name.toLocaleLowerCase();
 
   return (
     <OutsidePress
@@ -56,8 +42,9 @@ export default function MapSearchBar() {
               ? COLORS.foreground
               : hexToRgb(COLORS.foreground, 0.8),
             borderRadius: 10,
-            height: "auto",
-            overflow: "hidden",
+            height: 38,
+            // height: "auto",
+            paddingRight: 35,
           },
           row: {
             borderRadius: 10,
@@ -80,6 +67,12 @@ export default function MapSearchBar() {
           searchPlaceById(data.place_id).catch(console.error);
         }}
       />
+      <Fontisto
+        name="close"
+        size={20}
+        style={[styles.clear, !isKeyboardOpen && { opacity: 0.2 }]}
+        onPress={() => inputRef.current?.clear()}
+      />
     </OutsidePress>
   );
 }
@@ -93,5 +86,12 @@ const styles = StyleSheet.create({
   onKeyOpen: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.foreground,
+  },
+  clear: {
+    position: "absolute",
+    right: 7,
+    height: 38,
+    textAlignVertical: "center",
+    color: COLORS.background,
   },
 });

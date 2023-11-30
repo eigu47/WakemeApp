@@ -8,7 +8,7 @@ import AnimatedButton from "./AnimatedButton";
 import { MapContext } from "./MapContext";
 
 export default function MapGpsButton() {
-  const { getLocation, userLocation, centerMap, getCurrentAddress } =
+  const { getLocation, userLocation, centerMap, setAddress } =
     useContext(MapContext);
 
   return (
@@ -16,9 +16,11 @@ export default function MapGpsButton() {
       onPress={() => {
         if (!userLocation) {
           getLocation().catch(console.error);
+          return;
         }
+
         centerMap();
-        getCurrentAddress(userLocation).catch(console.error);
+        setAddress("user", userLocation).catch(console.error);
       }}
       style={[styles.button, !userLocation && styles.disabled]}
     >

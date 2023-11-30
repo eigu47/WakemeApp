@@ -36,12 +36,10 @@ export type GeocodeResponse = {
     | "UNKNOWN_ERROR";
 };
 
-export type Address = {
-  country?: {
-    long_name: string;
-    short_name: string;
-  };
-  area?: string;
-  locality?: string;
-  sublocality?: string;
-};
+export type Address = [
+  country?: string,
+  area?: string,
+  locality?: string,
+  sublocality1?: string,
+  sublocality2?: string,
+];

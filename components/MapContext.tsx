@@ -8,6 +8,7 @@ import {
   type SetStateAction,
 } from "react";
 import { fromLatLng, fromPlaceId, setKey } from "react-geocode";
+import { Keyboard } from "react-native";
 import type MapView from "react-native-maps";
 import { type LatLng, type Region } from "react-native-maps";
 
@@ -34,9 +35,14 @@ export const MapContext = createContext<{
   centerMap: (latLng?: LatLng | undefined, duration?: number) => void;
   userRegion?: Region;
   searchPlaceById: (place: string) => Promise<void>;
-  getCurrentAddress: (latLng: LatLng | undefined) => Promise<void>;
+  setAddress: (
+    state: "user" | "selected",
+    latLng: LatLng | null,
+  ) => Promise<void>;
   userAddress?: Address;
   selectedAddress?: Address;
+  countryCode?: string;
+  isKeyboardOpen: boolean;
 }>({
   radius: INITIAL_RADIUS,
   setRadius: () => {},
@@ -44,7 +50,8 @@ export const MapContext = createContext<{
   setSelectedLocation: () => {},
   centerMap: () => {},
   searchPlaceById: async () => {},
-  getCurrentAddress: async () => {},
+  setAddress: async () => {},
+  isKeyboardOpen: false,
 });
 
 export default function MapContextProvider({
@@ -57,6 +64,7 @@ export default function MapContextProvider({
   const [selectedAddress, setSelectedAddress] = useState<Address>();
   const [radius, setRadius] = useState(INITIAL_RADIUS);
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const mapRef = useRef<MapView>(null);
 
   async function getLocation() {
@@ -76,8 +84,16 @@ export default function MapContextProvider({
     setUserLocation(latLng);
   }
 
-  async function getCurrentAddress(latLng: LatLng | undefined) {
-    if (!latLng) return;
+  async function setAddress(state: "user" | "selected", latLng: LatLng | null) {
+    if (!latLng) {
+      if (state === "user") {
+        setUserAddress(undefined);
+      }
+      if (state === "selected") {
+        setSelectedAddress(undefined);
+      }
+      return;
+    }
 
     const { results } = (await fromLatLng(
       latLng.latitude,
@@ -85,12 +101,29 @@ export default function MapContextProvider({
     )) as GeocodeResponse;
 
     if (results[0]) {
-      setUserAddress(getAddress(results[0].address_components));
+      if (state === "user") {
+        setUserAddress(getAddress(results[0].address_components));
+      }
+      if (state === "selected") {
+        setSelectedAddress(getAddress(results[0].address_components));
+      }
     }
   }
 
   useEffect(() => {
     getLocation().catch(console.error);
+
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setIsKeyboardOpen(true);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setIsKeyboardOpen(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
   }, []);
 
   const region: Region | undefined = userLocation && {
@@ -133,9 +166,11 @@ export default function MapContextProvider({
         centerMap,
         userRegion: region,
         searchPlaceById,
-        getCurrentAddress,
+        setAddress,
         userAddress,
         selectedAddress,
+        countryCode: userAddress?.[0]?.toLocaleLowerCase(),
+        isKeyboardOpen,
       }}
     >
       {children}
@@ -149,25 +184,29 @@ const ZOOM = {
 };
 
 function getAddress(
-  adress: GeocodeResponse["results"][number]["address_components"],
+  address: GeocodeResponse["results"][number]["address_components"],
 ) {
-  return adress.reduce((acc: Address, cur) => {
+  return address.reduce((acc: Address, cur) => {
     if (cur.types.includes("country")) {
-      acc.country = cur;
+      acc[0] = cur.short_name;
       return acc;
     }
     if (cur.types.includes("administrative_area_level_1")) {
-      acc.area = cur.long_name;
+      acc[1] = cur.long_name;
       return acc;
     }
     if (cur.types.includes("locality")) {
-      acc.locality = cur.long_name;
+      acc[2] = cur.long_name;
       return acc;
     }
-    if (cur.types.includes("sublocality")) {
-      acc.sublocality = cur.long_name;
+    if (cur.types.includes("sublocality_level_1")) {
+      acc[3] = cur.long_name;
+      return acc;
+    }
+    if (cur.types.includes("sublocality_level_2")) {
+      acc[4] = cur.long_name;
       return acc;
     }
     return acc;
-  }, {});
+  }, []);
 }

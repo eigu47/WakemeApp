@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import MapAddress from "../../components/MapAddress";
 import MapCanvas from "../../components/MapCanvas";
 import MapContextProvider from "../../components/MapContext";
 import MapGpsButton from "../../components/MapGpsButton";
@@ -27,6 +28,7 @@ export default function TabOneScreen() {
 
         <MapCanvas />
         <MapGpsButton />
+        <MapAddress />
       </View>
     </MapContextProvider>
   );
