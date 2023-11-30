@@ -71,7 +71,9 @@ export default function MapSearchBar() {
             backgroundColor: hexToRgb(COLORS.background, 0.1),
           },
         }}
-        onPress={(data) => searchPlace(data.place_id)}
+        onPress={(data) => {
+          searchPlace(data.place_id).catch(console.error);
+        }}
       />
     </OutsidePress>
   );

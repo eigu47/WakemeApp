@@ -4,7 +4,11 @@ export type GeocodeResponse = {
   results: {
     types: string[];
     formatted_address: string;
-    adress_components: string[];
+    adress_components: {
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }[];
     geometry: {
       location: {
         lat: number;
@@ -30,4 +34,11 @@ export type GeocodeResponse = {
     | "REQUEST_DENIED"
     | "INVALID_REQUEST"
     | "UNKNOWN_ERROR";
+};
+
+export type Address = {
+  country?: string;
+  area?: string;
+  locality?: string;
+  sublocality?: string;
 };

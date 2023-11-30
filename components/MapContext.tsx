@@ -7,7 +7,7 @@ import {
   type RefObject,
   type SetStateAction,
 } from "react";
-import { fromPlaceId, setKey } from "react-geocode";
+import { fromLatLng, fromPlaceId, setKey } from "react-geocode";
 import type MapView from "react-native-maps";
 import { type LatLng, type Region } from "react-native-maps";
 
@@ -15,15 +15,14 @@ import {
   getCurrentPositionAsync,
   PermissionStatus,
   requestForegroundPermissionsAsync,
-  type LocationObject,
 } from "expo-location";
 
-import { type GeocodeResponse } from "../type/geocode";
+import { type Address, type GeocodeResponse } from "../type/geocode";
 
 process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
 
 export const MapContext = createContext<{
-  userLocation?: LocationObject;
+  userLocation?: LatLng;
   radius: number;
   setRadius: Dispatch<SetStateAction<number>>;
   getLocation: () => Promise<void>;
@@ -32,7 +31,10 @@ export const MapContext = createContext<{
   mapRef: RefObject<MapView> | null;
   centerMap: (latLng?: LatLng | undefined, duration?: number) => void;
   userRegion?: Region;
-  searchPlaceById: (place: string) => void;
+  searchPlaceById: (place: string) => Promise<void>;
+  getCurrentAddress: (latLng: LatLng | undefined) => Promise<void>;
+  userAddress?: Address;
+  selectedAddress?: Address;
 }>({
   radius: 1000,
   setRadius: () => {},
@@ -41,7 +43,8 @@ export const MapContext = createContext<{
   mapRef: null,
   centerMap: () => {},
   userRegion: undefined,
-  searchPlaceById: () => {},
+  searchPlaceById: async () => {},
+  getCurrentAddress: async () => {},
 });
 
 export default function MapContextProvider({
@@ -49,7 +52,9 @@ export default function MapContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [userLocation, setUserLocation] = useState<LocationObject>();
+  const [userLocation, setUserLocation] = useState<LatLng>();
+  const [userAddress, setUserAddress] = useState<Address>();
+  const [selectedAddress, setSelectedAddress] = useState<Address>();
   const [radius, setRadius] = useState(1000);
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const mapRef = useRef<MapView>(null);
@@ -62,7 +67,26 @@ export default function MapContextProvider({
     }
 
     const location = await getCurrentPositionAsync();
-    setUserLocation(location);
+
+    const latLng = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+
+    setUserLocation(latLng);
+  }
+
+  async function getCurrentAddress(latLng: LatLng | undefined) {
+    if (!latLng) return;
+
+    const { results } = (await fromLatLng(
+      latLng.latitude,
+      latLng.longitude,
+    )) as GeocodeResponse;
+
+    if (results[0]) {
+      setUserAddress(getAdress(results[0].adress_components));
+    }
   }
 
   useEffect(() => {
@@ -70,8 +94,7 @@ export default function MapContextProvider({
   }, []);
 
   const region: Region | undefined = userLocation && {
-    latitude: userLocation.coords.latitude,
-    longitude: userLocation.coords.longitude,
+    ...userLocation,
     ...ZOOM,
   };
 
@@ -80,21 +103,21 @@ export default function MapContextProvider({
       mapRef?.current?.animateToRegion({ ...latLng, ...ZOOM }, duration);
   }
 
-  function searchPlaceById(place: string) {
-    fromPlaceId(place)
-      .then(({ results }: GeocodeResponse) => {
-        const result = results[0];
-        if (!result) return;
+  async function searchPlaceById(place: string) {
+    const { results } = (await fromPlaceId(place)) as GeocodeResponse;
+    const result = results[0];
+    if (!result) return;
 
-        const latLng = {
-          latitude: result.geometry.location.lat,
-          longitude: result.geometry.location.lng,
-        };
+    const latLng = {
+      latitude: result.geometry.location.lat,
+      longitude: result.geometry.location.lng,
+    };
 
-        setSelectedLocation(latLng);
-        centerMap(latLng);
-      })
-      .catch(console.error);
+    const adress = getAdress(result.adress_components);
+
+    setSelectedLocation(latLng);
+    centerMap(latLng);
+    setSelectedAddress(adress);
   }
 
   return (
@@ -110,6 +133,9 @@ export default function MapContextProvider({
         centerMap,
         userRegion: region,
         searchPlaceById,
+        getCurrentAddress,
+        userAddress,
+        selectedAddress,
       }}
     >
       {children}
@@ -121,3 +147,27 @@ const ZOOM = {
   latitudeDelta: 0.05,
   longitudeDelta: 0.05,
 };
+
+function getAdress(
+  adress: GeocodeResponse["results"][number]["adress_components"],
+) {
+  return adress.reduce((acc: Address, cur) => {
+    if (cur.types.includes("country")) {
+      acc.country = cur.long_name;
+      return acc;
+    }
+    if (cur.types.includes("administrative_area_level_1")) {
+      acc.area = cur.long_name;
+      return acc;
+    }
+    if (cur.types.includes("locality")) {
+      acc.locality = cur.long_name;
+      return acc;
+    }
+    if (cur.types.includes("sublocality")) {
+      acc.sublocality = cur.long_name;
+      return acc;
+    }
+    return acc;
+  }, {});
+}
