@@ -4,7 +4,7 @@ export type GeocodeResponse = {
   results: {
     types: string[];
     formatted_address: string;
-    adress_components: {
+    address_components: {
       long_name: string;
       short_name: string;
       types: string[];
@@ -37,7 +37,10 @@ export type GeocodeResponse = {
 };
 
 export type Address = {
-  country?: string;
+  country?: {
+    long_name: string;
+    short_name: string;
+  };
   area?: string;
   locality?: string;
   sublocality?: string;

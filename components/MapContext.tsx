@@ -21,6 +21,8 @@ import { type Address, type GeocodeResponse } from "../type/geocode";
 
 process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
 
+const INITIAL_RADIUS = 1000;
+
 export const MapContext = createContext<{
   userLocation?: LatLng;
   radius: number;
@@ -28,7 +30,7 @@ export const MapContext = createContext<{
   getLocation: () => Promise<void>;
   selectedLocation?: LatLng;
   setSelectedLocation: Dispatch<SetStateAction<LatLng | undefined>>;
-  mapRef: RefObject<MapView> | null;
+  mapRef?: RefObject<MapView>;
   centerMap: (latLng?: LatLng | undefined, duration?: number) => void;
   userRegion?: Region;
   searchPlaceById: (place: string) => Promise<void>;
@@ -36,13 +38,11 @@ export const MapContext = createContext<{
   userAddress?: Address;
   selectedAddress?: Address;
 }>({
-  radius: 1000,
+  radius: INITIAL_RADIUS,
   setRadius: () => {},
   getLocation: async () => {},
   setSelectedLocation: () => {},
-  mapRef: null,
   centerMap: () => {},
-  userRegion: undefined,
   searchPlaceById: async () => {},
   getCurrentAddress: async () => {},
 });
@@ -55,7 +55,7 @@ export default function MapContextProvider({
   const [userLocation, setUserLocation] = useState<LatLng>();
   const [userAddress, setUserAddress] = useState<Address>();
   const [selectedAddress, setSelectedAddress] = useState<Address>();
-  const [radius, setRadius] = useState(1000);
+  const [radius, setRadius] = useState(INITIAL_RADIUS);
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const mapRef = useRef<MapView>(null);
 
@@ -85,7 +85,7 @@ export default function MapContextProvider({
     )) as GeocodeResponse;
 
     if (results[0]) {
-      setUserAddress(getAdress(results[0].adress_components));
+      setUserAddress(getAddress(results[0].address_components));
     }
   }
 
@@ -113,7 +113,7 @@ export default function MapContextProvider({
       longitude: result.geometry.location.lng,
     };
 
-    const adress = getAdress(result.adress_components);
+    const adress = getAddress(result.address_components);
 
     setSelectedLocation(latLng);
     centerMap(latLng);
@@ -148,12 +148,12 @@ const ZOOM = {
   longitudeDelta: 0.05,
 };
 
-function getAdress(
-  adress: GeocodeResponse["results"][number]["adress_components"],
+function getAddress(
+  adress: GeocodeResponse["results"][number]["address_components"],
 ) {
   return adress.reduce((acc: Address, cur) => {
     if (cur.types.includes("country")) {
-      acc.country = cur.long_name;
+      acc.country = cur;
       return acc;
     }
     if (cur.types.includes("administrative_area_level_1")) {
