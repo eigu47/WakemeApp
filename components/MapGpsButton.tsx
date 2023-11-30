@@ -1,7 +1,5 @@
-import { useContext, type RefObject } from "react";
+import { useContext } from "react";
 import { StyleSheet } from "react-native";
-import type MapView from "react-native-maps";
-import { type Region } from "react-native-maps";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -9,26 +7,18 @@ import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 import { MapContext } from "./MapContext";
 
-export default function MapGpsButton({
-  mapRef,
-  region,
-}: {
-  mapRef: RefObject<MapView>;
-  region?: Region;
-}) {
-  const { getLocation } = useContext(MapContext);
+export default function MapGpsButton() {
+  const { getLocation, userLocation, centerMap } = useContext(MapContext);
 
   return (
     <AnimatedButton
       onPress={() => {
-        if (region) {
-          mapRef.current?.animateToRegion(region, 500);
-          return;
+        if (!userLocation) {
+          getLocation().catch(console.error);
         }
-
-        getLocation().catch(console.error);
+        centerMap();
       }}
-      style={[styles.button, !region && styles.disabled]}
+      style={[styles.button, !userLocation && styles.disabled]}
     >
       <MaterialCommunityIcons
         style={styles.icon}

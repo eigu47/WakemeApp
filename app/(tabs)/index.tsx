@@ -1,11 +1,12 @@
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import Map from "../../components/Map";
+import MapCanvas from "../../components/MapCanvas";
 import MapContextProvider from "../../components/MapContext";
+import MapGpsButton from "../../components/MapGpsButton";
+import MapLocationModal from "../../components/MapLocationModal";
 import MapRadiusSlider from "../../components/MapRadiusSlider";
 import MapSearchBar from "../../components/MapSearchBar";
-import ModalComponent from "../../components/ModalComponent";
 import { View } from "../../components/Themed";
 import { COLORS, hexToRgb } from "../../constants/Colors";
 
@@ -14,7 +15,8 @@ export default function TabOneScreen() {
 
   return (
     <MapContextProvider>
-      <ModalComponent />
+      <MapLocationModal />
+
       <View style={styles.container}>
         <View style={[{ paddingTop: insets.top }, styles.bar]}>
           <MapSearchBar />
@@ -22,7 +24,9 @@ export default function TabOneScreen() {
             <MapRadiusSlider />
           </View>
         </View>
-        <Map />
+
+        <MapCanvas />
+        <MapGpsButton />
       </View>
     </MapContextProvider>
   );

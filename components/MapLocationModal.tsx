@@ -5,7 +5,7 @@ import { COLORS, hexToRgb } from "../constants/Colors";
 import { MapContext } from "./MapContext";
 import { Text, View } from "./Themed";
 
-export default function ModalComponent() {
+export default function MapLocationModal() {
   const { getLocation, userLocation } = useContext(MapContext);
 
   const [loading, setLoading] = useState(false);

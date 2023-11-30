@@ -7,7 +7,7 @@ import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const { setSearch } = useContext(MapContext);
+  const { searchPlaceById: searchPlace } = useContext(MapContext);
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -71,7 +71,7 @@ export default function MapSearchBar() {
             backgroundColor: hexToRgb(COLORS.background, 0.1),
           },
         }}
-        onPress={(data) => setSearch(data.place_id)}
+        onPress={(data) => searchPlace(data.place_id)}
       />
     </OutsidePress>
   );
