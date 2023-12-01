@@ -11,6 +11,8 @@ import MapSearchBar from "../../components/MapSearchBar";
 import { View } from "../../components/Themed";
 import { COLORS, hexToRgb } from "../../constants/Colors";
 
+export const BAR_HEIGHT = 96;
+
 export default function TabOneScreen() {
   const insets = useSafeAreaInsets();
 
@@ -25,6 +27,8 @@ export default function TabOneScreen() {
             <MapRadiusSlider />
           </View>
         </View>
+
+        {/* <View style={{ height: insets.top + 96, backgroundColor: "red" }} /> */}
 
         <MapCanvas />
         <MapGpsButton />

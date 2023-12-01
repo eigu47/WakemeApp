@@ -3,11 +3,10 @@ import { StyleSheet } from "react-native";
 import MapView, { Circle, Marker } from "react-native-maps";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { MapContext } from "./MapContext";
+import { MapContext, RadiusContext } from "./MapContext";
 
 export default function MapCanvas() {
   const {
-    radius,
     mapRef,
     centerMap,
     userRegion,
@@ -15,6 +14,8 @@ export default function MapCanvas() {
     setSelectedLocation,
     setSelectedAddress,
   } = useContext(MapContext);
+
+  const { circleRadius: radius } = useContext(RadiusContext);
 
   return (
     <MapView

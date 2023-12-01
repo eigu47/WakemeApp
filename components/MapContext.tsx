@@ -108,8 +108,8 @@ export function MapContextProvider({
     ...ZOOM,
   };
 
-  function centerMap(latLng: LatLng | undefined = region, duration = 500) {
-    latLng &&
+  function centerMap(latLng: LatLng | undefined = region, duration = 750) {
+    if (latLng)
       mapRef?.current?.animateToRegion({ ...latLng, ...ZOOM }, duration);
   }
 
@@ -152,8 +152,30 @@ export function MapContextProvider({
         isKeyboardOpen,
       }}
     >
-      {children}
+      <RadiusContextProvider>{children}</RadiusContextProvider>
     </MapContext.Provider>
+  );
+}
+
+export const RadiusContext = createContext<{
+  circleRadius: number;
+  setCircleRadius: Dispatch<SetStateAction<number>>;
+}>({
+  circleRadius: INITIAL_RADIUS,
+  setCircleRadius: () => {},
+});
+
+export function RadiusContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [circleRadius, setCircleRadius] = useState(INITIAL_RADIUS);
+
+  return (
+    <RadiusContext.Provider value={{ circleRadius, setCircleRadius }}>
+      {children}
+    </RadiusContext.Provider>
   );
 }
 
