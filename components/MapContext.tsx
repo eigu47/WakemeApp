@@ -38,6 +38,8 @@ export const MapContext = createContext<{
   onUserChangeLocation: (e: UserLocationChangeEvent) => void;
   followUser: boolean;
   setFollowUser: Dispatch<SetStateAction<boolean>>;
+  zoom: number;
+  setZoom: Dispatch<SetStateAction<number>>;
 }>({
   radius: INITIAL_RADIUS,
   setUserLocation: () => {},
@@ -51,6 +53,8 @@ export const MapContext = createContext<{
   onUserChangeLocation: () => {},
   followUser: true,
   setFollowUser: () => {},
+  zoom: ZOOM,
+  setZoom: () => {},
 });
 
 export function MapContextProvider({
@@ -64,6 +68,7 @@ export function MapContextProvider({
   const [selectedAddress, setSelectedAddress] = useState<Address>();
   const [followUser, setFollowUser] = useState(true);
   const [radius, setRadius] = useState(INITIAL_RADIUS);
+  const [zoom, setZoom] = useState(ZOOM);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const mapRef = useRef<MapView>(null);
   const firstCenter = useRef(true);
@@ -84,6 +89,14 @@ export function MapContextProvider({
     };
   }, []);
 
+  function setUserAddressFromLatLng(latLng: LatLng | null) {
+    return latLngToAddress(latLng).then(setUserAddress);
+  }
+
+  function setSelectedAddressFromLatLng(latLng: LatLng | null) {
+    return latLngToAddress(latLng).then(setSelectedAddress);
+  }
+
   function onUserChangeLocation(e: UserLocationChangeEvent) {
     const coords = e.nativeEvent.coordinate;
     if (!coords) return;
@@ -92,12 +105,16 @@ export function MapContextProvider({
 
     if (followUser || firstCenter.current) {
       centerMap(coords);
+      setUserAddressFromLatLng(coords).catch(console.error);
       firstCenter.current = false;
     }
   }
 
   function centerMap(latLng: LatLng, duration = 750) {
-    mapRef?.current?.animateToRegion({ ...latLng, ...ZOOM }, duration);
+    mapRef?.current?.animateToRegion(
+      { ...latLng, latitudeDelta: zoom, longitudeDelta: zoom },
+      duration,
+    );
   }
 
   async function searchPlace(place: string) {
@@ -128,10 +145,8 @@ export function MapContextProvider({
         mapRef,
         centerMap,
         searchPlace,
-        setUserAddress: (latLng: LatLng | null) =>
-          latLngToAddress(latLng).then(setUserAddress),
-        setSelectedAddress: (latLng: LatLng | null) =>
-          latLngToAddress(latLng).then(setSelectedAddress),
+        setUserAddress: setUserAddressFromLatLng,
+        setSelectedAddress: setSelectedAddressFromLatLng,
         userAddress,
         selectedAddress,
         countryCode: userAddress?.[0]?.toLocaleLowerCase(),
@@ -139,33 +154,42 @@ export function MapContextProvider({
         onUserChangeLocation,
         followUser,
         setFollowUser,
+        zoom,
+        setZoom,
       }}
     >
-      <RadiusContextProvider>{children}</RadiusContextProvider>
+      <SliderContextProvider>{children}</SliderContextProvider>
     </MapContext.Provider>
   );
 }
 
-// Separate context for radius to avoid rerendering the whole map
-export const RadiusContext = createContext<{
-  circleRadius: number;
-  setCircleRadius: Dispatch<SetStateAction<number>>;
+// Separate context for sliders to avoid rerendering the whole map
+export const SliderContext = createContext<{
+  visualRadius: number;
+  setVisualRadius: Dispatch<SetStateAction<number>>;
+  visualZoom: number;
+  setVisualZoom: Dispatch<SetStateAction<number>>;
 }>({
-  circleRadius: INITIAL_RADIUS,
-  setCircleRadius: () => {},
+  visualRadius: INITIAL_RADIUS,
+  setVisualRadius: () => {},
+  visualZoom: ZOOM,
+  setVisualZoom: () => {},
 });
 
-export function RadiusContextProvider({
+export function SliderContextProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [circleRadius, setCircleRadius] = useState(INITIAL_RADIUS);
+  const [visualRadius, setVisualRadius] = useState(INITIAL_RADIUS);
+  const [visualZoom, setVisualZoom] = useState(ZOOM);
 
   return (
-    <RadiusContext.Provider value={{ circleRadius, setCircleRadius }}>
+    <SliderContext.Provider
+      value={{ visualRadius, setVisualRadius, visualZoom, setVisualZoom }}
+    >
       {children}
-    </RadiusContext.Provider>
+    </SliderContext.Provider>
   );
 }
 

@@ -1,12 +1,14 @@
 import { useContext, useState } from "react";
 import { Button, Modal, StyleSheet } from "react-native";
 
+import { requestForegroundPermissionsAsync } from "expo-location";
+
 import { COLORS, hexToRgb } from "../constants/Colors";
 import { MapContext } from "./MapContext";
 import { Text, View } from "./Themed";
 
 export default function MapLocationModal() {
-  const { getUserLocation, userLocation } = useContext(MapContext);
+  const { userLocation } = useContext(MapContext);
 
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +21,7 @@ export default function MapLocationModal() {
             title={loading ? "Loading..." : "Try again"}
             onPress={() => {
               setLoading(true);
-              getUserLocation().catch(console.error);
+              requestForegroundPermissionsAsync().catch(console.error);
             }}
             disabled={loading}
           />

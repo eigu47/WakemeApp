@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 import MapView, { Circle, Marker } from "react-native-maps";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { MapContext, RadiusContext } from "./MapContext";
+import { MapContext, SliderContext } from "./MapContext";
 
 export default function MapCanvas() {
   const {
@@ -15,7 +15,7 @@ export default function MapCanvas() {
     onUserChangeLocation,
   } = useContext(MapContext);
 
-  const { circleRadius } = useContext(RadiusContext);
+  const { visualRadius } = useContext(SliderContext);
 
   return (
     <MapView
@@ -38,7 +38,7 @@ export default function MapCanvas() {
           <Marker coordinate={selectedLocation} />
           <Circle
             center={selectedLocation}
-            radius={circleRadius ?? 0}
+            radius={visualRadius ?? 0}
             fillColor={hexToRgb(COLORS.primary, 0.15)}
             strokeColor={hexToRgb(COLORS.ring, 0.5)}
           />

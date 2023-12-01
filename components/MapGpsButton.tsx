@@ -7,9 +7,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS } from "../constants/Colors";
 import AnimatedButton from "./AnimatedButton";
 import { MapContext } from "./MapContext";
+import { OutsidePress } from "./OutsidePress";
 
 export default function MapGpsButton() {
-  const { userLocation, centerMap, setUserAddress, setFollowUser } =
+  const { userLocation, centerMap, setUserAddress, setFollowUser, followUser } =
     useContext(MapContext);
 
   return (
@@ -27,11 +28,13 @@ export default function MapGpsButton() {
       }}
       style={[styles.button, !userLocation && styles.disabled]}
     >
-      <MaterialCommunityIcons
-        style={styles.icon}
-        name="crosshairs-gps"
-        size={25}
-      />
+      <OutsidePress id="gps" onOutsidePress={() => setFollowUser(false)}>
+        <MaterialCommunityIcons
+          style={[styles.icon, followUser && styles.follow]}
+          name="crosshairs-gps"
+          size={25}
+        />
+      </OutsidePress>
     </AnimatedButton>
   );
 }
@@ -56,5 +59,8 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.6,
+  },
+  follow: {
+    color: COLORS.ring,
   },
 });
