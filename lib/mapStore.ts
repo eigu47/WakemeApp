@@ -17,7 +17,6 @@ let refreshTimes = 0;
 
 export const useMapStore = create<{
   userLocation?: LatLng;
-  setUserLocation: (location: LatLng | undefined) => void;
   selectedLocation?: LatLng;
   setSelectedLocation: (location: LatLng | undefined) => void;
   userAddress?: Address;
@@ -26,11 +25,6 @@ export const useMapStore = create<{
   setSelectedAddress: (latLng: LatLng | null) => Promise<void>;
   radius: number;
   setRadius: (radius: number) => void;
-  mapRef: React.RefObject<MapView>;
-  setMapRef: (ref: React.RefObject<MapView>) => void;
-  centerMap: (latLng: LatLng, duration?: number) => void;
-  searchPlace: (place: string) => Promise<void>;
-  onUserChangeLocation: (e: UserLocationChangeEvent) => void;
   zoom: number;
   setZoom: (zoom: number) => void;
   keyboardIsOpen: boolean;
@@ -39,9 +33,12 @@ export const useMapStore = create<{
   setFollowUser: (follow: boolean) => void;
   permissionDenied: boolean;
   getPermission: () => Promise<void>;
+  mapRef: React.RefObject<MapView>;
+  centerMap: (latLng: LatLng, duration?: number) => void;
+  searchPlace: (place: string) => Promise<void>;
+  onUserChangeLocation: (e: UserLocationChangeEvent) => void;
 }>((set, get) => ({
   userLocation: undefined,
-  setUserLocation: (userLocation) => set({ userLocation }),
 
   selectedLocation: undefined,
   setSelectedLocation: (selectedLocation) => set({ selectedLocation }),
@@ -57,8 +54,22 @@ export const useMapStore = create<{
   radius: INITIAL_RADIUS,
   setRadius: (radius) => set({ radius }),
 
+  zoom: ZOOM,
+  setZoom: (zoom) => set({ zoom }),
+
+  keyboardIsOpen: false,
+  setKeyboardIsOpen: (keyboardIsOpen) => set({ keyboardIsOpen }),
+
+  followUser: false,
+  setFollowUser: (followUser) => set({ followUser }),
+
+  permissionDenied: false,
+  getPermission: async () =>
+    requestForegroundPermissionsAsync().then(({ status }) =>
+      set({ permissionDenied: status !== PermissionStatus.GRANTED }),
+    ),
+
   mapRef: { current: null },
-  setMapRef: (mapRef) => set({ mapRef }),
 
   centerMap: (latLng, duration = 750) =>
     get().mapRef.current?.animateToRegion(
@@ -104,19 +115,4 @@ export const useMapStore = create<{
       }
     }
   },
-
-  zoom: ZOOM,
-  setZoom: (zoom) => set({ zoom }),
-
-  keyboardIsOpen: false,
-  setKeyboardIsOpen: (keyboardIsOpen) => set({ keyboardIsOpen }),
-
-  followUser: false,
-  setFollowUser: (followUser) => set({ followUser }),
-
-  permissionDenied: false,
-  getPermission: async () =>
-    requestForegroundPermissionsAsync().then(({ status }) =>
-      set({ permissionDenied: status !== PermissionStatus.GRANTED }),
-    ),
 }));
