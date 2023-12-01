@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { StyleSheet } from "react-native";
 
-import { requestForegroundPermissionsAsync } from "expo-location";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
@@ -10,14 +9,20 @@ import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapGpsButton() {
-  const { userLocation, centerMap, setUserAddress, setFollowUser, followUser } =
-    useContext(MapContext);
+  const {
+    userLocation,
+    centerMap,
+    setUserAddress,
+    setFollowUser,
+    followUser,
+    getPermission,
+  } = useContext(MapContext);
 
   return (
     <AnimatedButton
       onPress={() => {
         if (!userLocation) {
-          requestForegroundPermissionsAsync().catch(console.error);
+          getPermission().catch(console.error);
         }
 
         if (userLocation) {

@@ -12,9 +12,12 @@ import { Keyboard } from "react-native";
 import type MapView from "react-native-maps";
 import { type LatLng, type UserLocationChangeEvent } from "react-native-maps";
 
-import { requestForegroundPermissionsAsync } from "expo-location";
+import {
+  PermissionStatus,
+  requestForegroundPermissionsAsync,
+} from "expo-location";
 
-import { INITIAL_RADIUS, ZOOM } from "../constants/Maps";
+import { INITIAL_RADIUS, REFRESH_RATE, ZOOM } from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
 
 process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
@@ -40,6 +43,8 @@ export const MapContext = createContext<{
   setFollowUser: Dispatch<SetStateAction<boolean>>;
   zoom: number;
   setZoom: Dispatch<SetStateAction<number>>;
+  permissionDenied: boolean;
+  getPermission: () => Promise<void>;
 }>({
   radius: INITIAL_RADIUS,
   setUserLocation: () => {},
@@ -55,6 +60,8 @@ export const MapContext = createContext<{
   setFollowUser: () => {},
   zoom: ZOOM,
   setZoom: () => {},
+  permissionDenied: false,
+  getPermission: async () => {},
 });
 
 export function MapContextProvider({
@@ -66,12 +73,23 @@ export function MapContextProvider({
   const [userAddress, setUserAddress] = useState<Address>();
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const [selectedAddress, setSelectedAddress] = useState<Address>();
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const [followUser, setFollowUser] = useState(true);
   const [radius, setRadius] = useState(INITIAL_RADIUS);
   const [zoom, setZoom] = useState(ZOOM);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const mapRef = useRef<MapView>(null);
+  const refreshTimes = useRef(0);
   const firstCenter = useRef(true);
+
+  async function getPermission() {
+    const { status } = await requestForegroundPermissionsAsync();
+    if (status === PermissionStatus.GRANTED) {
+      return setPermissionDenied(false);
+    }
+
+    setPermissionDenied(true);
+  }
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
@@ -81,7 +99,7 @@ export function MapContextProvider({
       setIsKeyboardOpen(false);
     });
 
-    requestForegroundPermissionsAsync().catch(console.error);
+    getPermission().catch(console.error);
 
     return () => {
       showSubscription.remove();
@@ -103,10 +121,20 @@ export function MapContextProvider({
 
     setUserLocation(coords);
 
-    if (followUser || firstCenter.current) {
+    if (firstCenter.current) {
       centerMap(coords);
       setUserAddressFromLatLng(coords).catch(console.error);
       firstCenter.current = false;
+    }
+
+    refreshTimes.current += 1;
+
+    if (followUser) {
+      centerMap(coords);
+
+      if (refreshTimes.current % REFRESH_RATE === 0) {
+        setUserAddressFromLatLng(coords).catch(console.error);
+      }
     }
   }
 
@@ -156,6 +184,8 @@ export function MapContextProvider({
         setFollowUser,
         zoom,
         setZoom,
+        permissionDenied,
+        getPermission,
       }}
     >
       <SliderContextProvider>{children}</SliderContextProvider>
@@ -230,6 +260,7 @@ function latLngToAddress(latLng: LatLng | null) {
 
   return fromLatLng(latLng.latitude, latLng.longitude).then(
     ({ results }: GeocodeResponse) => {
+      console.log(results);
       const components = results[0]?.address_components;
       if (!components) throw new Error("No address found");
 

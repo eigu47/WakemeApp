@@ -1,19 +1,17 @@
 import { useContext, useState } from "react";
 import { Button, Modal, StyleSheet } from "react-native";
 
-import { requestForegroundPermissionsAsync } from "expo-location";
-
 import { COLORS, hexToRgb } from "../constants/Colors";
 import { MapContext } from "./MapContext";
 import { Text, View } from "./Themed";
 
 export default function MapLocationModal() {
-  const { userLocation } = useContext(MapContext);
+  const { permissionDenied, getPermission } = useContext(MapContext);
 
   const [loading, setLoading] = useState(false);
 
   return (
-    <Modal animationType="fade" transparent visible={!userLocation}>
+    <Modal animationType="fade" transparent visible={permissionDenied}>
       <View style={[styles.container]}>
         <View style={styles.modal}>
           <Text>Permission to access location was denied</Text>
@@ -21,7 +19,7 @@ export default function MapLocationModal() {
             title={loading ? "Loading..." : "Try again"}
             onPress={() => {
               setLoading(true);
-              requestForegroundPermissionsAsync().catch(console.error);
+              getPermission().catch(console.error);
             }}
             disabled={loading}
           />
