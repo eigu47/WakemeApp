@@ -62,10 +62,12 @@ export function OutsidePressProvider({
       <View
         onTouchStart={() => {
           const skipId = global.skipEventId;
+          // const skipped: string[] = [];
           events.forEach(({ id, callback, disable }) => {
             if (id === skipId || disable) return;
 
             callback?.();
+            // skipped.push(id);
           });
           if (skipId) setSkipId(undefined);
         }}

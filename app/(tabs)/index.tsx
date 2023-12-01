@@ -23,6 +23,7 @@ export default function TabOneScreen() {
           <MapSearchBar />
           <View style={styles.barButton}>
             <MapRadiusSlider />
+            
           </View>
         </View>
 

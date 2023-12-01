@@ -43,20 +43,24 @@ export default function MapRadiusSlider() {
 
   return (
     <>
-      <AnimatedPressable
-        style={[styles.button, animatedView]}
-        onPress={() => {
-          setIsShow((prev) => !prev);
-          animate.value = withTiming(isShow ? 0 : 1, {
-            duration: 150,
-            easing: Easing.inOut(Easing.cubic),
-          });
-        }}
+      <OutsidePress
+        id="radius"
+        onOutsidePress={closeSlider}
+        style={styles.outside}
       >
-        <OutsidePress id="radius" onOutsidePress={closeSlider}>
+        <AnimatedPressable
+          style={[animatedView]}
+          onPress={() => {
+            setIsShow((prev) => !prev);
+            animate.value = withTiming(isShow ? 0 : 1, {
+              duration: 150,
+              easing: Easing.inOut(Easing.cubic),
+            });
+          }}
+        >
           <Text style={styles.text}>Range: {visualRadius}</Text>
-        </OutsidePress>
-      </AnimatedPressable>
+        </AnimatedPressable>
+      </OutsidePress>
       <OutsidePress
         id="radius"
         onOutsidePress={closeSlider}
@@ -70,7 +74,7 @@ export default function MapRadiusSlider() {
             step={100}
             onValueChange={setVisualRadius}
             onSlidingComplete={setRadius}
-            style={styles.slider}
+            style={[styles.slider]}
             thumbTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.primary}
             minimumTrackTintColor={COLORS.primary}
@@ -82,7 +86,7 @@ export default function MapRadiusSlider() {
 }
 
 const styles = StyleSheet.create({
-  button: {
+  outside: {
     borderRadius: 10,
     width: "40%",
     backgroundColor: COLORS.background,
@@ -97,10 +101,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     position: "absolute",
     top: 35,
-    overflow: "hidden",
   },
   sliderAnimated: {
     backgroundColor: COLORS.background,
+    borderRadius: 10,
   },
   slider: {
     height: "100%",

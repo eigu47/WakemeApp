@@ -260,7 +260,7 @@ function latLngToAddress(latLng: LatLng | null) {
 
   return fromLatLng(latLng.latitude, latLng.longitude).then(
     ({ results }: GeocodeResponse) => {
-      console.log(results);
+      // console.log(results);
       const components = results[0]?.address_components;
       if (!components) throw new Error("No address found");
 
