@@ -10,29 +10,20 @@ import {
 import { fromLatLng, fromPlaceId, setKey } from "react-geocode";
 import { Keyboard } from "react-native";
 import type MapView from "react-native-maps";
-import { type LatLng, type Region } from "react-native-maps";
+import { type LatLng, type UserLocationChangeEvent } from "react-native-maps";
 
-import {
-  getCurrentPositionAsync,
-  PermissionStatus,
-  requestForegroundPermissionsAsync,
-} from "expo-location";
+import { requestForegroundPermissionsAsync } from "expo-location";
 
+import { INITIAL_RADIUS, ZOOM } from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
 
 process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
 
-const INITIAL_RADIUS = 1000;
-const ZOOM = {
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
-};
-
 export const MapContext = createContext<{
   userLocation?: LatLng;
+  setUserLocation: Dispatch<SetStateAction<LatLng | undefined>>;
   radius: number;
   setRadius: Dispatch<SetStateAction<number>>;
-  getUserLocation: () => Promise<void>;
   selectedLocation?: LatLng;
   setSelectedLocation: Dispatch<SetStateAction<LatLng | undefined>>;
   userAddress?: Address;
@@ -40,21 +31,26 @@ export const MapContext = createContext<{
   selectedAddress?: Address;
   setSelectedAddress: (latLng: LatLng | null) => Promise<void>;
   mapRef?: RefObject<MapView>;
-  centerMap: (latLng?: LatLng, duration?: number) => void;
-  userRegion?: Region;
+  centerMap: (latLng: LatLng, duration?: number) => void;
   searchPlace: (place: string) => Promise<void>;
   countryCode?: string;
   isKeyboardOpen: boolean;
+  onUserChangeLocation: (e: UserLocationChangeEvent) => void;
+  followUser: boolean;
+  setFollowUser: Dispatch<SetStateAction<boolean>>;
 }>({
   radius: INITIAL_RADIUS,
+  setUserLocation: () => {},
   setRadius: () => {},
-  getUserLocation: async () => {},
   setUserAddress: async () => {},
   setSelectedLocation: () => {},
   setSelectedAddress: async () => {},
   centerMap: () => {},
   searchPlace: async () => {},
   isKeyboardOpen: false,
+  onUserChangeLocation: () => {},
+  followUser: true,
+  setFollowUser: () => {},
 });
 
 export function MapContextProvider({
@@ -66,30 +62,13 @@ export function MapContextProvider({
   const [userAddress, setUserAddress] = useState<Address>();
   const [selectedLocation, setSelectedLocation] = useState<LatLng>();
   const [selectedAddress, setSelectedAddress] = useState<Address>();
+  const [followUser, setFollowUser] = useState(true);
   const [radius, setRadius] = useState(INITIAL_RADIUS);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const mapRef = useRef<MapView>(null);
-
-  async function getUserLocation() {
-    const { status } = await requestForegroundPermissionsAsync();
-
-    if (status !== PermissionStatus.GRANTED) {
-      return;
-    }
-
-    const location = await getCurrentPositionAsync();
-
-    const latLng = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    };
-
-    setUserLocation(latLng);
-  }
+  const firstCenter = useRef(true);
 
   useEffect(() => {
-    getUserLocation().catch(console.error);
-
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
       setIsKeyboardOpen(true);
     });
@@ -97,20 +76,28 @@ export function MapContextProvider({
       setIsKeyboardOpen(false);
     });
 
+    requestForegroundPermissionsAsync().catch(console.error);
+
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
     };
   }, []);
 
-  const region: Region | undefined = userLocation && {
-    ...userLocation,
-    ...ZOOM,
-  };
+  function onUserChangeLocation(e: UserLocationChangeEvent) {
+    const coords = e.nativeEvent.coordinate;
+    if (!coords) return;
 
-  function centerMap(latLng: LatLng | undefined = region, duration = 750) {
-    if (latLng)
-      mapRef?.current?.animateToRegion({ ...latLng, ...ZOOM }, duration);
+    setUserLocation(coords);
+
+    if (followUser || firstCenter.current) {
+      centerMap(coords);
+      firstCenter.current = false;
+    }
+  }
+
+  function centerMap(latLng: LatLng, duration = 750) {
+    mapRef?.current?.animateToRegion({ ...latLng, ...ZOOM }, duration);
   }
 
   async function searchPlace(place: string) {
@@ -133,14 +120,13 @@ export function MapContextProvider({
     <MapContext.Provider
       value={{
         userLocation,
+        setUserLocation,
         radius,
         setRadius,
-        getUserLocation,
         selectedLocation,
         setSelectedLocation,
         mapRef,
         centerMap,
-        userRegion: region,
         searchPlace,
         setUserAddress: (latLng: LatLng | null) =>
           latLngToAddress(latLng).then(setUserAddress),
@@ -150,6 +136,9 @@ export function MapContextProvider({
         selectedAddress,
         countryCode: userAddress?.[0]?.toLocaleLowerCase(),
         isKeyboardOpen,
+        onUserChangeLocation,
+        followUser,
+        setFollowUser,
       }}
     >
       <RadiusContextProvider>{children}</RadiusContextProvider>
@@ -157,6 +146,7 @@ export function MapContextProvider({
   );
 }
 
+// Separate context for radius to avoid rerendering the whole map
 export const RadiusContext = createContext<{
   circleRadius: number;
   setCircleRadius: Dispatch<SetStateAction<number>>;
@@ -200,6 +190,10 @@ function getAddress(
       return acc;
     }
     if (cur.types.includes("sublocality_level_2")) {
+      acc[4] = cur.long_name;
+      return acc;
+    }
+    if (cur.types.includes("administrative_area_level_2") && !acc[4]) {
       acc[4] = cur.long_name;
       return acc;
     }

@@ -11,8 +11,6 @@ import MapSearchBar from "../../components/MapSearchBar";
 import { View } from "../../components/Themed";
 import { COLORS, hexToRgb } from "../../constants/Colors";
 
-export const BAR_HEIGHT = 96;
-
 export default function TabOneScreen() {
   const insets = useSafeAreaInsets();
 

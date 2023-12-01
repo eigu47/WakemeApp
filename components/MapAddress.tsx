@@ -2,8 +2,8 @@ import { useContext, useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BAR_HEIGHT } from "../app/(tabs)";
 import { COLORS } from "../constants/Colors";
+import { BAR_HEIGHT } from "../constants/Maps";
 import { type Address } from "../type/geocode";
 import { MapContext } from "./MapContext";
 import { Text } from "./Themed";

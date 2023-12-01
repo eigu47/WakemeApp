@@ -9,18 +9,17 @@ export default function MapCanvas() {
   const {
     mapRef,
     centerMap,
-    userRegion,
     selectedLocation,
     setSelectedLocation,
     setSelectedAddress,
+    onUserChangeLocation,
   } = useContext(MapContext);
 
-  const { circleRadius: radius } = useContext(RadiusContext);
+  const { circleRadius } = useContext(RadiusContext);
 
   return (
     <MapView
       ref={mapRef}
-      region={userRegion}
       style={styles.map}
       onLongPress={(e) => {
         setSelectedLocation(e.nativeEvent.coordinate);
@@ -28,6 +27,8 @@ export default function MapCanvas() {
         setSelectedAddress(e.nativeEvent.coordinate).catch(console.error);
       }}
       showsUserLocation
+      onUserLocationChange={onUserChangeLocation}
+      followsUserLocation
       rotateEnabled={false}
       toolbarEnabled={false}
       showsMyLocationButton={false}
@@ -37,7 +38,7 @@ export default function MapCanvas() {
           <Marker coordinate={selectedLocation} />
           <Circle
             center={selectedLocation}
-            radius={radius ?? 0}
+            radius={circleRadius ?? 0}
             fillColor={hexToRgb(COLORS.primary, 0.15)}
             strokeColor={hexToRgb(COLORS.ring, 0.5)}
           />
