@@ -1,4 +1,4 @@
-import { useContext, useRef } from "react";
+import { useRef } from "react";
 import { Keyboard, StyleSheet } from "react-native";
 import {
   GooglePlacesAutocomplete,
@@ -8,11 +8,15 @@ import {
 import { Fontisto } from "@expo/vector-icons";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { MapContext } from "./MapContext";
+import { useMapStore } from "../lib/mapStore";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const { searchPlace, countryCode, isKeyboardOpen } = useContext(MapContext);
+  const searchPlace = useMapStore((state) => state.searchPlace);
+  const isKeyboardOpen = useMapStore((state) => state.keyboardIsOpen);
+  const countryCode = useMapStore(
+    (state) => state.userAddress?.[0]?.toLowerCase(),
+  );
 
   const inputRef = useRef<GooglePlacesAutocompleteRef>(null);
 

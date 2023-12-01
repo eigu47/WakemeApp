@@ -1,12 +1,13 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Button, Modal, StyleSheet } from "react-native";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { MapContext } from "./MapContext";
+import { useMapStore } from "../lib/mapStore";
 import { Text, View } from "./Themed";
 
 export default function MapLocationModal() {
-  const { permissionDenied, getPermission } = useContext(MapContext);
+  const permissionDenied = useMapStore((state) => state.permissionDenied);
+  const getPermission = useMapStore((state) => state.getPermission);
 
   const [loading, setLoading] = useState(false);
 

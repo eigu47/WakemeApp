@@ -1,22 +1,20 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS } from "../constants/Colors";
 import { BAR_HEIGHT } from "../constants/Maps";
-import { type Address } from "../type/geocode";
-import { MapContext } from "./MapContext";
+import { getStringAddress } from "../lib/helpers";
+import { useMapStore } from "../lib/mapStore";
 import { Text } from "./Themed";
 
 export default function MapAddress() {
-  const {
-    selectedAddress,
-    userAddress,
-    centerMap,
-    selectedLocation,
-    userLocation,
-    mapRef,
-  } = useContext(MapContext);
+  const selectedAddress = useMapStore((state) => state.selectedAddress);
+  const userAddress = useMapStore((state) => state.userAddress);
+  const centerMap = useMapStore((state) => state.centerMap);
+  const selectedLocation = useMapStore((state) => state.selectedLocation);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const mapRef = useMapStore((state) => state.mapRef);
 
   const [viewBoth, setViewBoth] = useState(true);
   const insets = useSafeAreaInsets();
@@ -62,13 +60,6 @@ export default function MapAddress() {
       )}
     </Pressable>
   );
-}
-
-function getStringAddress(address: Address) {
-  const filter = address.filter((a) => a);
-  const cutTo = Math.max(0, filter.length - 2);
-
-  return filter.slice(cutTo).join(", ");
 }
 
 const styles = StyleSheet.create({

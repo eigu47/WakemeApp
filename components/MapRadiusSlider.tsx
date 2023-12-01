@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { StyleSheet } from "react-native";
 import Animated, {
   Easing,
@@ -10,14 +10,14 @@ import Animated, {
 import Slider from "@react-native-community/slider";
 
 import { COLORS } from "../constants/Colors";
+import { useMapStore } from "../lib/mapStore";
 import { AnimatedPressable } from "./AnimatedButton";
-import { MapContext, SliderContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 import { Text } from "./Themed";
 
 export default function MapRadiusSlider() {
-  const { setRadius } = useContext(MapContext);
-  const { visualRadius, setVisualRadius } = useContext(SliderContext);
+  const setRadius = useMapStore((state) => state.setRadius);
+  const radius = useMapStore((state) => state.radius);
 
   const [isShow, setIsShow] = useState(false);
   const animate = useSharedValue(0);
@@ -58,7 +58,7 @@ export default function MapRadiusSlider() {
             });
           }}
         >
-          <Text style={styles.text}>Range: {visualRadius}</Text>
+          <Text style={styles.text}>Range: {radius}</Text>
         </AnimatedPressable>
       </OutsidePress>
       <OutsidePress
@@ -70,10 +70,10 @@ export default function MapRadiusSlider() {
           <Slider
             minimumValue={100}
             maximumValue={5000}
-            value={visualRadius}
+            value={radius}
             step={100}
-            onValueChange={setVisualRadius}
-            onSlidingComplete={setRadius}
+            onValueChange={setRadius}
+            // onSlidingComplete={setRadius}
             style={[styles.slider]}
             thumbTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.primary}

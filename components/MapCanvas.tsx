@@ -1,21 +1,17 @@
-import { useContext } from "react";
 import { StyleSheet } from "react-native";
 import MapView, { Circle, Marker } from "react-native-maps";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { MapContext, SliderContext } from "./MapContext";
+import { useMapStore } from "../lib/mapStore";
 
 export default function MapCanvas() {
-  const {
-    mapRef,
-    centerMap,
-    selectedLocation,
-    setSelectedLocation,
-    setSelectedAddress,
-    onUserChangeLocation,
-  } = useContext(MapContext);
-
-  const { visualRadius } = useContext(SliderContext);
+  const mapRef = useMapStore((state) => state.mapRef);
+  const centerMap = useMapStore((state) => state.centerMap);
+  const setSelectedLocation = useMapStore((state) => state.setSelectedLocation);
+  const setSelectedAddress = useMapStore((state) => state.setSelectedAddress);
+  const onUserChangeLocation = useMapStore(
+    (state) => state.onUserChangeLocation,
+  );
 
   return (
     <MapView
@@ -33,18 +29,26 @@ export default function MapCanvas() {
       toolbarEnabled={false}
       showsMyLocationButton={false}
     >
-      {selectedLocation && (
-        <>
-          <Marker coordinate={selectedLocation} />
-          <Circle
-            center={selectedLocation}
-            radius={visualRadius ?? 0}
-            fillColor={hexToRgb(COLORS.primary, 0.15)}
-            strokeColor={hexToRgb(COLORS.ring, 0.5)}
-          />
-        </>
-      )}
+      <SelectedMarker />
     </MapView>
+  );
+}
+
+function SelectedMarker() {
+  const selectedLocation = useMapStore((state) => state.selectedLocation);
+  const radius = useMapStore((state) => state.radius);
+
+  if (!selectedLocation) return null;
+  return (
+    <>
+      <Marker coordinate={selectedLocation} />
+      <Circle
+        center={selectedLocation}
+        radius={radius ?? 0}
+        fillColor={hexToRgb(COLORS.primary, 0.15)}
+        strokeColor={hexToRgb(COLORS.ring, 0.5)}
+      />
+    </>
   );
 }
 

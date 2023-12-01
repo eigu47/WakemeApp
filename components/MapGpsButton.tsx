@@ -1,22 +1,19 @@
-import { useContext } from "react";
 import { StyleSheet } from "react-native";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
+import { useMapStore } from "../lib/mapStore";
 import AnimatedButton from "./AnimatedButton";
-import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapGpsButton() {
-  const {
-    userLocation,
-    centerMap,
-    setUserAddress,
-    setFollowUser,
-    followUser,
-    getPermission,
-  } = useContext(MapContext);
+  const userLocation = useMapStore((state) => state.userLocation);
+  const centerMap = useMapStore((state) => state.centerMap);
+  const setUserAddress = useMapStore((state) => state.setUserAddress);
+  const setFollowUser = useMapStore((state) => state.setFollowUser);
+  const followUser = useMapStore((state) => state.followUser);
+  const getPermission = useMapStore((state) => state.getPermission);
 
   return (
     <AnimatedButton

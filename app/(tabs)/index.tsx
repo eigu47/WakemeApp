@@ -1,21 +1,44 @@
-import { StyleSheet } from "react-native";
+import { useEffect } from "react";
+import { setKey } from "react-geocode";
+import { Keyboard, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import MapAddress from "../../components/MapAddress";
 import MapCanvas from "../../components/MapCanvas";
-import { MapContextProvider } from "../../components/MapContext";
 import MapGpsButton from "../../components/MapGpsButton";
 import MapLocationModal from "../../components/MapLocationModal";
 import MapRadiusSlider from "../../components/MapRadiusSlider";
 import MapSearchBar from "../../components/MapSearchBar";
 import { View } from "../../components/Themed";
 import { COLORS, hexToRgb } from "../../constants/Colors";
+import { useMapStore } from "../../lib/mapStore";
+
+process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
 
 export default function TabOneScreen() {
+  const setKeyboardIsOpen = useMapStore((state) => state.setKeyboardIsOpen);
+  const getPermission = useMapStore((state) => state.getPermission);
+
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardIsOpen(true);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardIsOpen(false);
+    });
+
+    getPermission().catch(console.error);
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [setKeyboardIsOpen, getPermission]);
+
   return (
-    <MapContextProvider>
+    <>
       <MapLocationModal />
 
       <View style={styles.container}>
@@ -23,7 +46,6 @@ export default function TabOneScreen() {
           <MapSearchBar />
           <View style={styles.barButton}>
             <MapRadiusSlider />
-            
           </View>
         </View>
 
@@ -33,7 +55,7 @@ export default function TabOneScreen() {
         <MapGpsButton />
         <MapAddress />
       </View>
-    </MapContextProvider>
+    </>
   );
 }
 
