@@ -12,8 +12,7 @@ import { MapContext } from "./MapContext";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const { searchPlaceById, countryCode, isKeyboardOpen } =
-    useContext(MapContext);
+  const { searchPlace, countryCode, isKeyboardOpen } = useContext(MapContext);
 
   const inputRef = useRef<GooglePlacesAutocompleteRef>(null);
 
@@ -64,7 +63,7 @@ export default function MapSearchBar() {
           },
         }}
         onPress={(data) => {
-          searchPlaceById(data.place_id).catch(console.error);
+          searchPlace(data.place_id).catch(console.error);
         }}
       />
       <Fontisto

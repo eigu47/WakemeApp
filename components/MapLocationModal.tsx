@@ -6,7 +6,7 @@ import { MapContext } from "./MapContext";
 import { Text, View } from "./Themed";
 
 export default function MapLocationModal() {
-  const { getLocation, userLocation } = useContext(MapContext);
+  const { getUserLocation, userLocation } = useContext(MapContext);
 
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +19,7 @@ export default function MapLocationModal() {
             title={loading ? "Loading..." : "Try again"}
             onPress={() => {
               setLoading(true);
-              getLocation().catch(console.error);
+              getUserLocation().catch(console.error);
             }}
             disabled={loading}
           />

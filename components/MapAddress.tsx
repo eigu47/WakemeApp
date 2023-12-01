@@ -9,6 +9,7 @@ import { Text, View } from "./Themed";
 export default function MapAddress() {
   const { selectedAddress, userAddress } = useContext(MapContext);
 
+  if (!selectedAddress && !userAddress) return null;
   return (
     <View style={styles.view}>
       {selectedAddress && (
@@ -21,11 +22,11 @@ export default function MapAddress() {
   );
 }
 
-function getStringAddress(address: Address | undefined) {
-  return address
-    ?.slice(2)
-    .filter((a) => a)
-    .join(", ");
+function getStringAddress(address: Address) {
+  const filter = address.filter((a) => a);
+  const cutTo = Math.max(0, filter.length - 2);
+
+  return filter.slice(cutTo).join(", ");
 }
 
 const styles = StyleSheet.create({

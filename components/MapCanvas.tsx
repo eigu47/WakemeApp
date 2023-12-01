@@ -13,7 +13,7 @@ export default function MapCanvas() {
     userRegion,
     selectedLocation,
     setSelectedLocation,
-    setAddress,
+    setSelectedAddress,
   } = useContext(MapContext);
 
   return (
@@ -24,7 +24,7 @@ export default function MapCanvas() {
       onLongPress={(e) => {
         setSelectedLocation(e.nativeEvent.coordinate);
         centerMap(e.nativeEvent.coordinate);
-        setAddress("selected", e.nativeEvent.coordinate).catch(console.error);
+        setSelectedAddress(e.nativeEvent.coordinate).catch(console.error);
       }}
       showsUserLocation
       rotateEnabled={false}
