@@ -13,24 +13,19 @@ import {
 } from "expo-location";
 import { create } from "zustand";
 
-import {
-  BAR_HEIGHT,
-  INITIAL_RADIUS,
-  INITIAL_ZOOM,
-  REFRESH_RATE,
-} from "../constants/Maps";
+import { BAR_HEIGHT, INITIAL_RADIUS, REFRESH_RATE } from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
 import { getAddress, latLngToAddress } from "./helpers";
 
 let firstCenter = true;
 let refreshTimes = 0;
-let switchView = true;
+let viewBoth = true;
+let userZoom: number | undefined = undefined;
 
 type MapState = {
   userLocation?: LatLng;
   selectedLocation?: LatLng;
   radius: number;
-  zoom: number;
   keyboardIsOpen: boolean;
   followUser: boolean;
   mapRef: React.RefObject<MapView>;
@@ -40,16 +35,17 @@ type MapState = {
   setSelectedAddress: (latLng: LatLng | null) => Promise<void>;
   permissionDenied: boolean;
   getPermission: () => Promise<void>;
-  centerMap: (latLng: LatLng, duration?: number) => void;
+  centerMap: (
+    latLng: LatLng,
+    options?: { duration?: number; zoom?: number },
+  ) => void;
   onSearchPlace: (e: GooglePlaceData) => void;
   onUserChangeLocation: (e: UserLocationChangeEvent) => void;
   onCanvasLongPress: (e: LongPressEvent) => void;
   onGPSButtonPress: () => void;
   onAddressPress: (inset: number) => void;
   setState: (
-    state: Partial<
-      Pick<MapState, "radius" | "zoom" | "keyboardIsOpen" | "followUser">
-    >,
+    state: Partial<Pick<MapState, "radius" | "keyboardIsOpen" | "followUser">>,
   ) => void;
 };
 
@@ -57,7 +53,6 @@ export const useMapStore = create<MapState>()((set, get) => ({
   userLocation: undefined,
   selectedLocation: undefined,
   radius: INITIAL_RADIUS,
-  zoom: INITIAL_ZOOM,
   keyboardIsOpen: false,
   followUser: false,
   mapRef: { current: null },
@@ -76,13 +71,11 @@ export const useMapStore = create<MapState>()((set, get) => ({
       set({ permissionDenied: status !== PermissionStatus.GRANTED }),
     ),
 
-  centerMap: (latLng, duration = 750) => {
-    const { mapRef, zoom } = get();
-    mapRef.current?.animateToRegion(
-      { ...latLng, latitudeDelta: zoom, longitudeDelta: zoom },
-      duration,
-    );
-  },
+  centerMap: (
+    latLng,
+    { duration, zoom } = { duration: 750, zoom: undefined },
+  ) =>
+    get().mapRef.current?.animateCamera({ center: latLng, zoom }, { duration }),
 
   onSearchPlace: (e) => {
     const { centerMap } = get();
@@ -116,7 +109,7 @@ export const useMapStore = create<MapState>()((set, get) => ({
       refreshTimes = 0;
 
       if (firstCenter) {
-        centerMap(coords);
+        centerMap(coords, { zoom: 12, duration: 1000 });
         firstCenter = false;
       }
     }
@@ -163,7 +156,12 @@ export const useMapStore = create<MapState>()((set, get) => ({
     }
 
     if (userLocation && selectedLocation) {
-      if (switchView) {
+      if (viewBoth) {
+        mapRef.current
+          ?.getCamera()
+          .then(({ zoom }) => (userZoom = zoom))
+          .catch(console.error);
+
         mapRef?.current?.fitToCoordinates([selectedLocation, userLocation], {
           edgePadding: {
             top: inset + BAR_HEIGHT + 50,
@@ -173,13 +171,13 @@ export const useMapStore = create<MapState>()((set, get) => ({
           },
           animated: true,
         });
-        switchView = false;
+        viewBoth = false;
         return;
       }
 
-      if (!switchView) {
-        centerMap(selectedLocation);
-        switchView = true;
+      if (!viewBoth) {
+        centerMap(selectedLocation, { zoom: userZoom });
+        viewBoth = true;
       }
     }
   },
