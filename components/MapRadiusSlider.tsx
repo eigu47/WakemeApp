@@ -58,7 +58,7 @@ export default function MapRadiusSlider() {
             });
           }}
         >
-          <Text style={styles.text}>Range: {radius}</Text>
+          <Text style={styles.text}>Range: {radius} m</Text>
         </AnimatedPressable>
       </OutsidePress>
       <OutsidePress

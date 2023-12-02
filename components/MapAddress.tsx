@@ -9,7 +9,7 @@ import { Text } from "./Themed";
 export default function MapAddress() {
   const selectedAddress = useMapStore((state) => state.selectedAddress);
   const userAddress = useMapStore((state) => state.userAddress);
-  const onAddressPress = useMapStore((state) => state.onAddressPress);
+  const onAddressPress = useMapStore((state) => state.changeView);
   const inset = useSafeAreaInsets().top;
 
   if (!selectedAddress && !userAddress) return null;

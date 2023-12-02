@@ -5,7 +5,7 @@ import { COLORS, hexToRgb } from "../constants/Colors";
 import { useMapStore } from "../lib/mapStore";
 import { Text, View } from "./Themed";
 
-export default function MapLocationModal() {
+export default function MapPermissionModal() {
   const permissionDenied = useMapStore((state) => state.permissionDenied);
   const getPermission = useMapStore((state) => state.getPermission);
 

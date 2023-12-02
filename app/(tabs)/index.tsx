@@ -5,8 +5,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import MapAddress from "../../components/MapAddress";
 import MapCanvas from "../../components/MapCanvas";
+import MapDistance from "../../components/MapDistance";
 import MapGpsButton from "../../components/MapGpsButton";
-import MapLocationModal from "../../components/MapLocationModal";
+import MapPermissionModal from "../../components/MapPermissionModal";
 import MapRadiusSlider from "../../components/MapRadiusSlider";
 import MapSearchBar from "../../components/MapSearchBar";
 import { View } from "../../components/Themed";
@@ -19,7 +20,7 @@ export default function TabOneScreen() {
   const getPermission = useMapStore((state) => state.getPermission);
   const setState = useMapStore((state) => state.setState);
 
-  const insets = useSafeAreaInsets();
+  const inset = useSafeAreaInsets().top;
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
@@ -39,14 +40,18 @@ export default function TabOneScreen() {
 
   return (
     <>
-      <MapLocationModal />
+      <MapPermissionModal />
 
       <View style={styles.container}>
-        <View style={[{ paddingTop: insets.top }, styles.bar]}>
-          <MapSearchBar />
-          <View style={styles.barButton}>
-            <MapRadiusSlider />
+        <View style={styles.barContainer}>
+          <View style={[styles.bar, { paddingTop: inset }]}>
+            <MapSearchBar />
+            <View style={styles.barButton}>
+              <MapRadiusSlider />
+            </View>
           </View>
+
+          <MapDistance />
         </View>
 
         {/* <View style={{ height: insets.top + 96, backgroundColor: "red" }} /> */}
@@ -64,16 +69,19 @@ const styles = StyleSheet.create({
     position: "relative",
     flex: 1,
   },
-  bar: {
+  barContainer: {
     position: "absolute",
-    top: 0,
     width: "100%",
     alignItems: "center",
     zIndex: 1,
+    backgroundColor: "transparent",
+  },
+  bar: {
+    backgroundColor: hexToRgb(COLORS.background, 0.8),
     paddingHorizontal: "5%",
+    width: "100%",
     gap: 5,
     paddingBottom: 8,
-    backgroundColor: hexToRgb(COLORS.background, 0.8),
   },
   barButton: {
     width: "100%",

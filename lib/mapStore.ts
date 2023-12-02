@@ -15,7 +15,7 @@ import { create } from "zustand";
 
 import { BAR_HEIGHT, INITIAL_RADIUS, REFRESH_RATE } from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
-import { getAddress, latLngToAddress } from "./helpers";
+import { getAddress, getDistance, latLngToAddress } from "./helpers";
 
 let firstCenter = true;
 let refreshTimes = 0;
@@ -29,6 +29,8 @@ type MapState = {
   keyboardIsOpen: boolean;
   followUser: boolean;
   mapRef: React.RefObject<MapView>;
+  distance?: number;
+  checkDistance: () => void;
   userAddress?: Address;
   setUserAddress: (latLng: LatLng | null) => Promise<void>;
   selectedAddress?: Address;
@@ -43,7 +45,7 @@ type MapState = {
   onUserChangeLocation: (e: UserLocationChangeEvent) => void;
   onCanvasLongPress: (e: LongPressEvent) => void;
   onGPSButtonPress: () => void;
-  onAddressPress: (inset: number) => void;
+  changeView: (inset: number) => void;
   setState: (
     state: Partial<Pick<MapState, "radius" | "keyboardIsOpen" | "followUser">>,
   ) => void;
@@ -56,6 +58,22 @@ export const useMapStore = create<MapState>()((set, get) => ({
   keyboardIsOpen: false,
   followUser: false,
   mapRef: { current: null },
+
+  distance: undefined,
+  checkDistance: () => {
+    const { userLocation, selectedLocation, radius } = get();
+    if (!userLocation || !selectedLocation) {
+      set({ distance: undefined });
+      return;
+    }
+
+    const distance = getDistance(userLocation, selectedLocation);
+    set({ distance });
+
+    if (distance < radius / 1000) {
+      // TODO send notification
+    }
+  },
 
   userAddress: undefined,
   setUserAddress: async (latLng) =>
@@ -78,7 +96,7 @@ export const useMapStore = create<MapState>()((set, get) => ({
     get().mapRef.current?.animateCamera({ center: latLng, zoom }, { duration }),
 
   onSearchPlace: (e) => {
-    const { centerMap } = get();
+    const { centerMap, checkDistance } = get();
     fromPlaceId(e.place_id)
       .then(({ results }: GeocodeResponse) => {
         const result = results[0];
@@ -93,12 +111,19 @@ export const useMapStore = create<MapState>()((set, get) => ({
         set({ selectedLocation: latLng });
 
         set({ selectedAddress: getAddress(result.address_components) });
+        checkDistance();
       })
       .catch(console.error);
   },
 
   onUserChangeLocation: (e) => {
-    const { centerMap, userAddress, setUserAddress, followUser } = get();
+    const {
+      centerMap,
+      userAddress,
+      setUserAddress,
+      followUser,
+      checkDistance,
+    } = get();
     const coords = e.nativeEvent.coordinate;
     if (!coords) return;
 
@@ -123,10 +148,12 @@ export const useMapStore = create<MapState>()((set, get) => ({
         setUserAddress(coords).catch(console.error);
       }
     }
+
+    checkDistance();
   },
 
   onCanvasLongPress: (e) => {
-    const { centerMap, setSelectedAddress } = get();
+    const { centerMap, setSelectedAddress, checkDistance } = get();
     const coords = e.nativeEvent.coordinate;
     if (!coords) return;
 
@@ -134,6 +161,7 @@ export const useMapStore = create<MapState>()((set, get) => ({
     centerMap(coords);
 
     setSelectedAddress(coords).catch(console.error);
+    checkDistance();
   },
 
   onGPSButtonPress: () => {
@@ -149,7 +177,7 @@ export const useMapStore = create<MapState>()((set, get) => ({
     refreshTimes = 0;
   },
 
-  onAddressPress: (inset) => {
+  changeView: (inset) => {
     const { selectedLocation, userLocation, mapRef, centerMap } = get();
     if (!userLocation && selectedLocation) {
       centerMap(selectedLocation);
