@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Keyboard, StyleSheet } from "react-native";
 import {
   GooglePlacesAutocomplete,
@@ -17,11 +17,16 @@ export default function MapSearchBar() {
   const countryCode = useMapStore(
     (state) => state.userAddress?.[0]?.toLowerCase(),
   );
+  const [error, setError] = useState(false);
 
   const inputRef = useRef<GooglePlacesAutocompleteRef>(null);
 
   return (
-    <OutsidePress onOutsidePress={Keyboard.dismiss} style={styles.view}>
+    <OutsidePress
+      onOutsidePress={Keyboard.dismiss}
+      disable={error}
+      style={styles.view}
+    >
       <GooglePlacesAutocomplete
         ref={inputRef}
         query={{
@@ -29,7 +34,7 @@ export default function MapSearchBar() {
           rankby: "distance",
           components: countryCode && `country:${countryCode}`,
         }}
-        placeholder="Search"
+        placeholder={error ? "Something went wrong..." : "Search"}
         enablePoweredByContainer={false}
         styles={{
           container: {
@@ -61,7 +66,12 @@ export default function MapSearchBar() {
             backgroundColor: hexToRgb(COLORS.background, 0.1),
           },
         }}
-        onPress={onSearchPlace}
+        onPress={(e) => {
+          onSearchPlace(e).catch((e) => {
+            console.error(e);
+            setError(true);
+          });
+        }}
       />
       <Fontisto
         name="close"

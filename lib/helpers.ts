@@ -1,4 +1,3 @@
-import { fromLatLng } from "react-geocode";
 import { type LatLng } from "react-native-maps";
 
 import { type Address, type GeocodeResponse } from "../type/geocode";
@@ -35,20 +34,6 @@ export function getAddress(
   }, []);
 }
 
-export function latLngToAddress(latLng: LatLng | null) {
-  if (!latLng) return Promise.resolve(undefined);
-  // this calls an API
-  return fromLatLng(latLng.latitude, latLng.longitude).then(
-    ({ results }: GeocodeResponse) => {
-      // console.log(results);
-      const components = results[0]?.address_components;
-      if (!components) throw new Error("No address found");
-
-      return getAddress(components);
-    },
-  );
-}
-
 export function getStringAddress(address: Address) {
   const filter = address.filter((a) => a);
   const cutTo = Math.max(0, filter.length - 2);
@@ -77,4 +62,43 @@ export function formatDistance(n: number) {
   if (abs < 10) return `${n.toFixed(2)} Km`;
   if (abs < 100) return `${n.toFixed(1)} Km`;
   return `${n.toFixed(0)} Km`;
+}
+
+const testData: {
+  latLng: LatLng;
+  date: Date;
+  totalDist: number;
+  diffDist: number;
+  totalTime: number;
+  diffTime: number;
+}[] = [];
+
+export function saveTest(latLng: LatLng) {
+  const first = testData[0];
+  const last = testData.at(-1);
+  const date = new Date();
+
+  if (!first || !last) {
+    testData.push({
+      latLng,
+      date,
+      totalDist: 0,
+      diffDist: 0,
+      totalTime: 0,
+      diffTime: 0,
+    });
+  } else {
+    const totalDist = Math.round(getDistance(latLng, first.latLng) / 1000);
+    const diffDist = Math.round(getDistance(latLng, last.latLng) / 1000);
+    const totalTime = Math.round(
+      (date.getTime() - last.date.getTime()) / (1000 * 60),
+    );
+    const diffTime = Math.round(
+      (date.getTime() - last.date.getTime()) / (1000 * 60),
+    );
+    testData.push({ latLng, date, totalDist, diffDist, totalTime, diffTime });
+  }
+
+  // eslint-disable-next-line no-console
+  console.log(testData);
 }

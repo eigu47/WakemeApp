@@ -30,7 +30,7 @@ export default function TabOneScreen() {
       setState({ keyboardIsOpen: false });
     });
 
-    getPermission().catch(console.error);
+    getPermission();
 
     return () => {
       showSubscription.remove();
