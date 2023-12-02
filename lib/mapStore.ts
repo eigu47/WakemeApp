@@ -1,6 +1,11 @@
 import { fromPlaceId } from "react-geocode";
+import { type GooglePlaceData } from "react-native-google-places-autocomplete";
 import type MapView from "react-native-maps";
-import { type LatLng, type UserLocationChangeEvent } from "react-native-maps";
+import {
+  type LatLng,
+  type LongPressEvent,
+  type UserLocationChangeEvent,
+} from "react-native-maps";
 
 import {
   PermissionStatus,
@@ -8,40 +13,54 @@ import {
 } from "expo-location";
 import { create } from "zustand";
 
-import { INITIAL_RADIUS, REFRESH_RATE, ZOOM } from "../constants/Maps";
+import {
+  BAR_HEIGHT,
+  INITIAL_RADIUS,
+  INITIAL_ZOOM,
+  REFRESH_RATE,
+} from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
 import { getAddress, latLngToAddress } from "./helpers";
 
 let firstCenter = true;
 let refreshTimes = 0;
+let switchView = true;
 
-export const useMapStore = create<{
+type MapState = {
   userLocation?: LatLng;
   selectedLocation?: LatLng;
-  setSelectedLocation: (location: LatLng | undefined) => void;
+  radius: number;
+  zoom: number;
+  keyboardIsOpen: boolean;
+  followUser: boolean;
+  mapRef: React.RefObject<MapView>;
   userAddress?: Address;
   setUserAddress: (latLng: LatLng | null) => Promise<void>;
   selectedAddress?: Address;
   setSelectedAddress: (latLng: LatLng | null) => Promise<void>;
-  radius: number;
-  setRadius: (radius: number) => void;
-  zoom: number;
-  setZoom: (zoom: number) => void;
-  keyboardIsOpen: boolean;
-  setKeyboardIsOpen: (isOpen: boolean) => void;
-  followUser: boolean;
-  setFollowUser: (follow: boolean) => void;
   permissionDenied: boolean;
   getPermission: () => Promise<void>;
-  mapRef: React.RefObject<MapView>;
   centerMap: (latLng: LatLng, duration?: number) => void;
-  searchPlace: (place: string) => Promise<void>;
+  onSearchPlace: (e: GooglePlaceData) => void;
   onUserChangeLocation: (e: UserLocationChangeEvent) => void;
-}>((set, get) => ({
-  userLocation: undefined,
+  onCanvasLongPress: (e: LongPressEvent) => void;
+  onGPSButtonPress: () => void;
+  onAddressPress: (inset: number) => void;
+  setState: (
+    state: Partial<
+      Pick<MapState, "radius" | "zoom" | "keyboardIsOpen" | "followUser">
+    >,
+  ) => void;
+};
 
+export const useMapStore = create<MapState>()((set, get) => ({
+  userLocation: undefined,
   selectedLocation: undefined,
-  setSelectedLocation: (selectedLocation) => set({ selectedLocation }),
+  radius: INITIAL_RADIUS,
+  zoom: INITIAL_ZOOM,
+  keyboardIsOpen: false,
+  followUser: false,
+  mapRef: { current: null },
 
   userAddress: undefined,
   setUserAddress: async (latLng) =>
@@ -51,68 +70,119 @@ export const useMapStore = create<{
   setSelectedAddress: async (latLng) =>
     latLngToAddress(latLng).then((selectedAddress) => set({ selectedAddress })),
 
-  radius: INITIAL_RADIUS,
-  setRadius: (radius) => set({ radius }),
-
-  zoom: ZOOM,
-  setZoom: (zoom) => set({ zoom }),
-
-  keyboardIsOpen: false,
-  setKeyboardIsOpen: (keyboardIsOpen) => set({ keyboardIsOpen }),
-
-  followUser: false,
-  setFollowUser: (followUser) => set({ followUser }),
-
   permissionDenied: false,
   getPermission: async () =>
     requestForegroundPermissionsAsync().then(({ status }) =>
       set({ permissionDenied: status !== PermissionStatus.GRANTED }),
     ),
 
-  mapRef: { current: null },
-
-  centerMap: (latLng, duration = 750) =>
-    get().mapRef.current?.animateToRegion(
-      { ...latLng, latitudeDelta: get().zoom, longitudeDelta: get().zoom },
+  centerMap: (latLng, duration = 750) => {
+    const { mapRef, zoom } = get();
+    mapRef.current?.animateToRegion(
+      { ...latLng, latitudeDelta: zoom, longitudeDelta: zoom },
       duration,
-    ),
+    );
+  },
 
-  searchPlace: async (place) => {
-    const { results } = (await fromPlaceId(place)) as GeocodeResponse;
-    const result = results[0];
-    if (!result) return;
+  onSearchPlace: (e) => {
+    const { centerMap } = get();
+    fromPlaceId(e.place_id)
+      .then(({ results }: GeocodeResponse) => {
+        const result = results[0];
+        if (!result) return;
 
-    const latLng = {
-      latitude: result.geometry.location.lat,
-      longitude: result.geometry.location.lng,
-    };
+        const latLng = {
+          latitude: result.geometry.location.lat,
+          longitude: result.geometry.location.lng,
+        };
 
-    get().centerMap(latLng);
-    set({ selectedLocation: latLng });
+        centerMap(latLng);
+        set({ selectedLocation: latLng });
 
-    set({ selectedAddress: getAddress(result.address_components) });
+        set({ selectedAddress: getAddress(result.address_components) });
+      })
+      .catch(console.error);
   },
 
   onUserChangeLocation: (e) => {
+    const { centerMap, userAddress, setUserAddress, followUser } = get();
     const coords = e.nativeEvent.coordinate;
     if (!coords) return;
 
     set({ userLocation: coords });
 
-    if (firstCenter) {
-      get().centerMap(coords);
-      get().setUserAddress(coords).catch(console.error);
-      firstCenter = false;
+    if (!userAddress) {
+      setUserAddress(coords).catch(console.error);
+      refreshTimes = 0;
+
+      if (firstCenter) {
+        centerMap(coords);
+        firstCenter = false;
+      }
     }
 
     refreshTimes += 1;
 
-    if (get().followUser) {
-      get().centerMap(coords);
+    if (followUser) {
+      centerMap(coords);
 
       if (refreshTimes % REFRESH_RATE === 0) {
-        get().setUserAddress(coords).catch(console.error);
+        setUserAddress(coords).catch(console.error);
       }
     }
   },
+
+  onCanvasLongPress: (e) => {
+    const { centerMap, setSelectedAddress } = get();
+    const coords = e.nativeEvent.coordinate;
+    if (!coords) return;
+
+    set({ selectedLocation: coords });
+    centerMap(coords);
+
+    setSelectedAddress(coords).catch(console.error);
+  },
+
+  onGPSButtonPress: () => {
+    const { userLocation, getPermission, centerMap, setUserAddress } = get();
+    if (!userLocation) {
+      getPermission().catch(console.error);
+      return;
+    }
+
+    centerMap(userLocation);
+    setUserAddress(userLocation).catch(console.error);
+    set({ followUser: true });
+    refreshTimes = 0;
+  },
+
+  onAddressPress: (inset) => {
+    const { selectedLocation, userLocation, mapRef, centerMap } = get();
+    if (!userLocation && selectedLocation) {
+      centerMap(selectedLocation);
+    }
+
+    if (userLocation && selectedLocation) {
+      if (switchView) {
+        mapRef?.current?.fitToCoordinates([selectedLocation, userLocation], {
+          edgePadding: {
+            top: inset + BAR_HEIGHT + 50,
+            right: 50,
+            bottom: 50,
+            left: 50,
+          },
+          animated: true,
+        });
+        switchView = false;
+        return;
+      }
+
+      if (!switchView) {
+        centerMap(selectedLocation);
+        switchView = true;
+      }
+    }
+  },
+
+  setState: (state) => set(state),
 }));

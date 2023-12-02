@@ -16,8 +16,8 @@ import { OutsidePress } from "./OutsidePress";
 import { Text } from "./Themed";
 
 export default function MapRadiusSlider() {
-  const setRadius = useMapStore((state) => state.setRadius);
   const radius = useMapStore((state) => state.radius);
+  const setState = useMapStore((state) => state.setState);
 
   const [isShow, setIsShow] = useState(false);
   const animate = useSharedValue(0);
@@ -72,8 +72,7 @@ export default function MapRadiusSlider() {
             maximumValue={5000}
             value={radius}
             step={100}
-            onValueChange={setRadius}
-            // onSlidingComplete={setRadius}
+            onValueChange={(radius) => setState({ radius })}
             style={[styles.slider]}
             thumbTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.primary}

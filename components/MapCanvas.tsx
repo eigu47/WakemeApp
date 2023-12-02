@@ -6,9 +6,7 @@ import { useMapStore } from "../lib/mapStore";
 
 export default function MapCanvas() {
   const mapRef = useMapStore((state) => state.mapRef);
-  const centerMap = useMapStore((state) => state.centerMap);
-  const setSelectedLocation = useMapStore((state) => state.setSelectedLocation);
-  const setSelectedAddress = useMapStore((state) => state.setSelectedAddress);
+  const onCanvasLongPress = useMapStore((state) => state.onCanvasLongPress);
   const onUserChangeLocation = useMapStore(
     (state) => state.onUserChangeLocation,
   );
@@ -17,11 +15,7 @@ export default function MapCanvas() {
     <MapView
       ref={mapRef}
       style={styles.map}
-      onLongPress={(e) => {
-        setSelectedLocation(e.nativeEvent.coordinate);
-        centerMap(e.nativeEvent.coordinate);
-        setSelectedAddress(e.nativeEvent.coordinate).catch(console.error);
-      }}
+      onLongPress={onCanvasLongPress}
       showsUserLocation
       onUserLocationChange={onUserChangeLocation}
       followsUserLocation

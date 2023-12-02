@@ -16,17 +16,17 @@ import { useMapStore } from "../../lib/mapStore";
 process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
 
 export default function TabOneScreen() {
-  const setKeyboardIsOpen = useMapStore((state) => state.setKeyboardIsOpen);
   const getPermission = useMapStore((state) => state.getPermission);
+  const setState = useMapStore((state) => state.setState);
 
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setKeyboardIsOpen(true);
+      setState({ keyboardIsOpen: true });
     });
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardIsOpen(false);
+      setState({ keyboardIsOpen: false });
     });
 
     getPermission().catch(console.error);
@@ -35,7 +35,7 @@ export default function TabOneScreen() {
       showSubscription.remove();
       hideSubscription.remove();
     };
-  }, [setKeyboardIsOpen, getPermission]);
+  }, [getPermission, setState]);
 
   return (
     <>

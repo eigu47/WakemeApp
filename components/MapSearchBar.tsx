@@ -12,7 +12,7 @@ import { useMapStore } from "../lib/mapStore";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const searchPlace = useMapStore((state) => state.searchPlace);
+  const onSearchPlace = useMapStore((state) => state.onSearchPlace);
   const isKeyboardOpen = useMapStore((state) => state.keyboardIsOpen);
   const countryCode = useMapStore(
     (state) => state.userAddress?.[0]?.toLowerCase(),
@@ -21,12 +21,7 @@ export default function MapSearchBar() {
   const inputRef = useRef<GooglePlacesAutocompleteRef>(null);
 
   return (
-    <OutsidePress
-      onOutsidePress={() => {
-        Keyboard.dismiss();
-      }}
-      style={styles.view}
-    >
+    <OutsidePress onOutsidePress={Keyboard.dismiss} style={styles.view}>
       <GooglePlacesAutocomplete
         ref={inputRef}
         query={{
@@ -66,9 +61,7 @@ export default function MapSearchBar() {
             backgroundColor: hexToRgb(COLORS.background, 0.1),
           },
         }}
-        onPress={(data) => {
-          searchPlace(data.place_id).catch(console.error);
-        }}
+        onPress={onSearchPlace}
       />
       <Fontisto
         name="close"

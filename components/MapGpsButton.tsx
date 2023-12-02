@@ -8,29 +8,16 @@ import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapGpsButton() {
-  const userLocation = useMapStore((state) => state.userLocation);
-  const centerMap = useMapStore((state) => state.centerMap);
-  const setUserAddress = useMapStore((state) => state.setUserAddress);
-  const setFollowUser = useMapStore((state) => state.setFollowUser);
   const followUser = useMapStore((state) => state.followUser);
-  const getPermission = useMapStore((state) => state.getPermission);
+  const setState = useMapStore((state) => state.setState);
+  const onGPSButtonPress = useMapStore((state) => state.onGPSButtonPress);
 
   return (
-    <AnimatedButton
-      onPress={() => {
-        if (!userLocation) {
-          getPermission().catch(console.error);
-        }
-
-        if (userLocation) {
-          centerMap(userLocation);
-          setUserAddress(userLocation).catch(console.error);
-          setFollowUser(true);
-        }
-      }}
-      style={[styles.button, !userLocation && styles.disabled]}
-    >
-      <OutsidePress id="gps" onOutsidePress={() => setFollowUser(false)}>
+    <AnimatedButton onPress={onGPSButtonPress} style={styles.button}>
+      <OutsidePress
+        id="gps"
+        onOutsidePress={() => setState({ followUser: false })}
+      >
         <MaterialCommunityIcons
           style={[styles.icon, followUser && styles.follow]}
           name="crosshairs-gps"
@@ -58,9 +45,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textAlignVertical: "center",
     height: "100%",
-  },
-  disabled: {
-    opacity: 0.6,
   },
   follow: {
     color: COLORS.ring,
