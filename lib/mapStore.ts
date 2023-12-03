@@ -15,6 +15,7 @@ import {
 import { create } from "zustand";
 
 import {
+  ANIMATE_CAMERA_DURATION,
   BAR_HEIGHT,
   INITIAL_RADIUS,
   INITIAL_ZOOM,
@@ -79,14 +80,16 @@ export const useMapStore = create<MapState>()((set, get) => ({
 
   centerMap: (
     latLng,
-    { duration, zoom } = { duration: 750, zoom: undefined },
+    { duration, zoom } = { duration: ANIMATE_CAMERA_DURATION, zoom: undefined },
   ) => {
     const { mapRef } = get();
     mapRef.current
       ?.getCamera()
-      .then(({ zoom: cameraZoom }) => {
-        zoom = !cameraZoom || cameraZoom < 11 ? INITIAL_ZOOM : zoom;
-        mapRef.current?.animateCamera({ center: latLng, zoom }, { duration });
+      .then(({ zoom: cameraZoom = 0 }) => {
+        mapRef.current?.animateCamera(
+          { center: latLng, zoom: cameraZoom < 11 ? INITIAL_ZOOM : zoom },
+          { duration },
+        );
       })
       .catch(
         () =>
