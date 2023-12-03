@@ -67,36 +67,53 @@ export function formatDistance(n: number) {
 const testData: {
   latLng: LatLng;
   date: Date;
+  time: string;
   totalDist: number;
   diffDist: number;
   totalTime: number;
   diffTime: number;
+  address: Address;
 }[] = [];
 
-export function saveTest(latLng: LatLng) {
+export function saveTest(latLng: LatLng, address: Address) {
   const first = testData[0];
   const last = testData.at(-1);
   const date = new Date();
+  const time = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 
   if (!first || !last) {
     testData.push({
       latLng,
       date,
+      time,
       totalDist: 0,
       diffDist: 0,
       totalTime: 0,
       diffTime: 0,
+      address,
     });
   } else {
-    const totalDist = Math.round(getDistance(latLng, first.latLng) / 1000);
-    const diffDist = Math.round(getDistance(latLng, last.latLng) / 1000);
-    const totalTime = Math.round(
-      (date.getTime() - last.date.getTime()) / (1000 * 60),
-    );
-    const diffTime = Math.round(
-      (date.getTime() - last.date.getTime()) / (1000 * 60),
-    );
-    testData.push({ latLng, date, totalDist, diffDist, totalTime, diffTime });
+    const totalDist = +(getDistance(latLng, first.latLng) * 1000);
+    const diffDist = +(getDistance(latLng, last.latLng) * 1000);
+    const totalTime = +(
+      (date.getTime() - first.date.getTime()) /
+      (1000 * 60)
+    ).toFixed(2);
+    const diffTime = +(
+      (date.getTime() - last.date.getTime()) /
+      (1000 * 60)
+    ).toFixed(2);
+
+    testData.push({
+      latLng,
+      date,
+      time,
+      totalDist,
+      diffDist,
+      totalTime,
+      diffTime,
+      address,
+    });
   }
 
   // eslint-disable-next-line no-console

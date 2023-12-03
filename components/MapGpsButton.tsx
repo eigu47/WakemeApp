@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
 import { useMapStore } from "../lib/mapStore";
@@ -18,10 +18,10 @@ export default function MapGpsButton() {
         id="gps"
         onOutsidePress={() => setState({ followUser: false })}
       >
-        <MaterialCommunityIcons
+        <MaterialIcons
+          name="gps-fixed"
+          size={24}
           style={[styles.icon, followUser && styles.follow]}
-          name="crosshairs-gps"
-          size={25}
         />
       </OutsidePress>
     </AnimatedButton>

@@ -20,7 +20,7 @@ export default function MapPermissionModal() {
             title={loading ? "Loading..." : "Try again"}
             onPress={() => {
               setLoading(true);
-              getPermission().catch(console.error);
+              getPermission();
             }}
             disabled={loading}
           />
