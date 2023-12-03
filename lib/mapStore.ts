@@ -91,10 +91,10 @@ export const useMapStore = create<MapState>()((set, get) => ({
           { duration },
         );
       })
-      .catch(
-        () =>
-          mapRef.current?.animateCamera({ center: latLng, zoom }, { duration }),
-      );
+      .catch((e) => {
+        console.error(e);
+        mapRef.current?.animateCamera({ center: latLng, zoom }, { duration });
+      });
   },
 
   onSearchPlace: async (e) => {

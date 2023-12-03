@@ -17,14 +17,14 @@ export default function MapSearchBar() {
   const countryCode = useMapStore(
     (state) => state.userAddress?.[0]?.toLowerCase(),
   );
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string>();
 
   const inputRef = useRef<GooglePlacesAutocompleteRef>(null);
 
   return (
     <OutsidePress
       onOutsidePress={Keyboard.dismiss}
-      disable={error}
+      disable={!!error}
       style={styles.view}
     >
       <GooglePlacesAutocomplete
@@ -34,7 +34,7 @@ export default function MapSearchBar() {
           rankby: "distance",
           components: countryCode && `country:${countryCode}`,
         }}
-        placeholder={error ? "Something went wrong..." : "Search"}
+        placeholder={error ?? "Search"}
         enablePoweredByContainer={false}
         styles={{
           container: {
@@ -67,9 +67,9 @@ export default function MapSearchBar() {
           },
         }}
         onPress={(e) => {
-          onSearchPlace(e).catch((e) => {
+          onSearchPlace(e).catch((e: Error) => {
             console.error(e);
-            setError(true);
+            setError(e.message ?? "Something went wrong...");
           });
         }}
       />
