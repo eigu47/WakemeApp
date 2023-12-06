@@ -52,16 +52,22 @@ export function getDistance(from: LatLng, to: LatLng) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = Math.round(R * c * 100) / 100;
+  const d = Math.round(R * c * 1000);
   return d;
 }
 
-export function formatDistance(n: number) {
-  const abs = Math.abs(n);
-  if (abs < 1) return `${(n * 1000).toFixed(0)} m`;
-  if (abs < 10) return `${n.toFixed(2)} Km`;
-  if (abs < 100) return `${n.toFixed(1)} Km`;
-  return `${n.toFixed(0)} Km`;
+export function formatDistance(m: number) {
+  const km = m / 1000;
+  const abs = Math.abs(km);
+  if (abs < 1) return `${m.toFixed(0)} m`;
+  if (abs < 10) return `${km.toFixed(2)} Km`;
+  if (abs < 100) return `${km.toFixed(1)} Km`;
+  return `${km.toFixed(0)} Km`;
+}
+
+export function roundByMagnitude(n: number) {
+  const magnitude = Math.pow(10, Math.floor(Math.log10(n)));
+  return Math.max(magnitude, n - (n % (magnitude * 2)));
 }
 
 const testData: {

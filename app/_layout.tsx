@@ -6,6 +6,7 @@ import {
   setBackgroundColorAsync,
   setButtonStyleAsync,
 } from "expo-navigation-bar";
+import { setNotificationHandler } from "expo-notifications";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -26,6 +27,15 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+setNotificationHandler({
+  // eslint-disable-next-line @typescript-eslint/require-await
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({

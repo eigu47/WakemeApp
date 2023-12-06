@@ -16,8 +16,10 @@ export default function MapDistance() {
 
   return (
     <Pressable style={styles.container} onPress={() => changeView(inset)}>
-      <Text>Destination: {formatDistance(distance)}</Text>
-      <Text>In range: {formatDistance(distance - radius / 1000)}</Text>
+      <Text style={styles.text}>Destination: {formatDistance(distance)}</Text>
+      <Text style={styles.text}>
+        In range: {formatDistance(distance - radius)}
+      </Text>
     </Pressable>
   );
 }
@@ -30,5 +32,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
+  },
+  text: {
+    fontSize: 13,
   },
 });

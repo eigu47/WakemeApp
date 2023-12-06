@@ -12,6 +12,10 @@ import {
   PermissionStatus,
   requestForegroundPermissionsAsync,
 } from "expo-location";
+import {
+  dismissAllNotificationsAsync,
+  scheduleNotificationAsync,
+} from "expo-notifications";
 import { create } from "zustand";
 
 import {
@@ -22,11 +26,18 @@ import {
   REFRESH_DISTANCE,
 } from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
-import { getAddress, getDistance } from "./helpers";
+import {
+  formatDistance,
+  getAddress,
+  getDistance,
+  getStringAddress,
+  roundByMagnitude,
+} from "./helpers";
 
-let lastLocation: LatLng | undefined = undefined;
+let lastLocation: LatLng | undefined;
 let viewBoth = true;
-let userZoom: number | undefined = undefined;
+let userZoom: number | undefined;
+let roundDistance: number | undefined;
 
 type MapState = {
   userLocation?: LatLng;
@@ -36,8 +47,10 @@ type MapState = {
   radius: number;
   keyboardIsOpen: boolean;
   followUser: boolean;
-  mapRef: RefObject<MapView>;
   distance?: number;
+  mapRef: RefObject<MapView>;
+  alarm: boolean;
+  setAlarm: (isSet: boolean) => void;
   permissionDenied: boolean;
   getPermission: () => void;
   centerMap: (
@@ -62,9 +75,20 @@ export const useMapStore = create<MapState>()((set, get) => ({
   radius: INITIAL_RADIUS,
   keyboardIsOpen: false,
   followUser: true,
+  distance: undefined,
   mapRef: { current: null },
 
-  distance: undefined,
+  alarm: false,
+  setAlarm: (alarm) => {
+    if (alarm) {
+      checkDistance();
+    } else {
+      roundDistance = undefined;
+      dismissAllNotificationsAsync().catch(console.error);
+    }
+
+    set({ alarm });
+  },
 
   permissionDenied: false,
   getPermission: () => {
@@ -130,9 +154,7 @@ export const useMapStore = create<MapState>()((set, get) => ({
       centerMap(latLng);
     }
 
-    if (!lastLocation || getDistance(lastLocation, latLng) > REFRESH_DISTANCE) {
-      setUserAddress(latLng).catch(console.error);
-    }
+    setUserAddress(latLng, REFRESH_DISTANCE).catch(console.error);
   },
 
   onCanvasLongPress: (e) => {
@@ -155,7 +177,7 @@ export const useMapStore = create<MapState>()((set, get) => ({
     }
 
     centerMap(userLocation);
-    setUserAddress(userLocation).catch(console.error);
+    setUserAddress(userLocation, REFRESH_DISTANCE / 4).catch(console.error);
     set({ followUser: true });
   },
 
@@ -206,12 +228,14 @@ async function latLngToAddress(latLng: LatLng) {
   return getAddress(components);
 }
 
-async function setUserAddress(latLng: LatLng) {
-  const userAddress = await latLngToAddress(latLng);
-  useMapStore.setState({ userAddress });
-  lastLocation = latLng;
+async function setUserAddress(latLng: LatLng, refreshDistance: number) {
+  if (!lastLocation || getDistance(lastLocation, latLng) > refreshDistance) {
+    const userAddress = await latLngToAddress(latLng);
+    useMapStore.setState({ userAddress });
+    lastLocation = latLng;
 
-  // saveTest(latLng, userAddress);
+    // saveTest(latLng, userAddress);
+  }
 }
 
 async function setSelectedAddress(latLng: LatLng) {
@@ -220,16 +244,42 @@ async function setSelectedAddress(latLng: LatLng) {
 }
 
 function checkDistance() {
-  const { userLocation, selectedLocation, radius } = useMapStore.getState();
+  const { userLocation, selectedLocation, radius, alarm } =
+    useMapStore.getState();
   if (!userLocation || !selectedLocation) {
     useMapStore.setState({ distance: undefined });
+    roundDistance = undefined;
     return;
   }
 
   const distance = getDistance(userLocation, selectedLocation);
   useMapStore.setState({ distance });
 
-  if (distance < radius / 1000) {
+  if (!alarm) return;
+
+  if (distance < radius) {
     // TODO send notification
   }
+
+  const rounded = Math.max(100, roundByMagnitude(distance));
+  if (roundDistance !== rounded) {
+    roundDistance = rounded;
+    updateNotification(rounded).catch(console.error);
+  }
+}
+
+async function updateNotification(distance: number) {
+  await dismissAllNotificationsAsync();
+
+  const { selectedAddress } = useMapStore.getState();
+  if (!selectedAddress) return;
+
+  await scheduleNotificationAsync({
+    content: {
+      title: `To: ${getStringAddress(selectedAddress)}`,
+      body: `You are within ${formatDistance(distance)} of your destination`,
+      sticky: true,
+    },
+    trigger: null,
+  });
 }
