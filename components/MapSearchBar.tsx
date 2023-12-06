@@ -46,7 +46,6 @@ export default function MapSearchBar() {
               : hexToRgb(COLORS.foreground, 0.8),
             borderRadius: 10,
             height: 38,
-            // height: "auto",
             paddingRight: 35,
           },
           row: {
@@ -77,7 +76,7 @@ export default function MapSearchBar() {
         name="close"
         size={20}
         style={[styles.clear, !keyboardIsOpen && { opacity: 0.2 }]}
-        onPress={() => inputRef.current?.clear()}
+        onPress={() => inputRef.current?.setAddressText("")}
       />
     </OutsidePress>
   );

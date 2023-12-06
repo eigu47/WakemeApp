@@ -1,5 +1,6 @@
 import { type RefObject } from "react";
 import { fromLatLng, fromPlaceId } from "react-geocode";
+import { Alert, Linking } from "react-native";
 import { type GooglePlaceData } from "react-native-google-places-autocomplete";
 import type MapView from "react-native-maps";
 import {
@@ -107,13 +108,25 @@ export const useMapStore = create<MapState>()((set, get) => ({
   permissionDenied: false,
   getPermission: () => {
     requestForegroundPermissionsAsync()
-      .then(({ status }) =>
-        set({ permissionDenied: status !== PermissionStatus.GRANTED }),
-      )
-      .catch((e) => {
-        console.error(e);
-        set({ permissionDenied: true });
-      });
+      .then(({ status }) => {
+        if (status !== PermissionStatus.GRANTED) {
+          Alert.alert(
+            "Permission Error",
+            "Please enable location permissions in settings",
+            [
+              {
+                text: "Settings",
+                onPress: () => {
+                  Linking.openSettings().catch(console.error);
+                },
+              },
+              { text: "Cancel" },
+              { text: "Try again", onPress: get().getPermission },
+            ],
+          );
+        }
+      })
+      .catch((e) => console.error(e));
   },
 
   centerMap: (
@@ -269,14 +282,24 @@ function checkDistance() {
   const distance = getDistance(userLocation, selectedLocation);
   useMapStore.setState({ distance });
 
-  if (!alarm) return;
+  if (!alarm || !selectedAddress) return;
 
   if (distance < radius) {
-    // TODO send notification
+    dismissAllNotificationsAsync().catch(console.error);
+    scheduleNotificationAsync({
+      content: {
+        title: `To: ${getStringAddress(selectedAddress)}`,
+        body: `You are within ${formatDistance(radius)} of your destination`,
+        sticky: true,
+      },
+      trigger: null,
+    }).catch(console.error);
+
+    return;
   }
 
   const rounded = Math.max(100, roundByMagnitude(distance));
-  if (selectedAddress && roundDistance !== rounded) {
+  if (roundDistance !== rounded) {
     roundDistance = rounded;
 
     dismissAllNotificationsAsync().catch(console.error);

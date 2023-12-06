@@ -7,7 +7,6 @@ import MapAlarmButton from "../../components/MapAlarmButton";
 import MapCanvas from "../../components/MapCanvas";
 import MapDistance from "../../components/MapDistance";
 import MapGpsButton from "../../components/MapGpsButton";
-import MapPermissionModal from "../../components/MapPermissionModal";
 import MapRadiusSlider from "../../components/MapRadiusSlider";
 import MapSearchBar from "../../components/MapSearchBar";
 import { View } from "../../components/Themed";
@@ -19,29 +18,25 @@ export default function TabOneScreen() {
   const inset = useSafeAreaInsets().top;
 
   return (
-    <>
-      <MapPermissionModal />
-
-      <View style={styles.container}>
-        <View style={styles.barContainer}>
-          <View style={[styles.bar, { paddingTop: inset }]}>
-            <MapSearchBar />
-            <View style={styles.barButton}>
-              <MapRadiusSlider />
-              <MapAlarmButton />
-            </View>
+    <View style={styles.container}>
+      <View style={styles.barContainer}>
+        <View style={[styles.bar, { paddingTop: inset }]}>
+          <MapSearchBar />
+          <View style={styles.barButton}>
+            <MapRadiusSlider />
+            <MapAlarmButton />
           </View>
-
-          <MapDistance />
         </View>
 
-        {/* <View style={{ height: insets.top + 96, backgroundColor: "red" }} /> */}
-
-        <MapCanvas />
-        <MapGpsButton />
-        <MapAddress />
+        <MapDistance />
       </View>
-    </>
+
+      {/* <View style={{ height: insets.top + 96, backgroundColor: "red" }} /> */}
+
+      <MapCanvas />
+      <MapGpsButton />
+      <MapAddress />
+    </View>
   );
 }
 
@@ -63,6 +58,7 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: 5,
     paddingBottom: 8,
+    zIndex: 1,
   },
   barButton: {
     width: "100%",
