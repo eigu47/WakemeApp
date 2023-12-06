@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { AppState, Keyboard } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { isDevice } from "expo-device";
 import { useFonts } from "expo-font";
 import {
   setBackgroundColorAsync,
@@ -12,8 +14,10 @@ import { StatusBar } from "expo-status-bar";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 
+import Debug from "../components/Debug";
 import { OutsidePressProvider } from "../components/OutsidePress";
 import { COLORS } from "../constants/Colors";
+import { useMapStore } from "../lib/mapStore";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -55,6 +59,35 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  const getPermission = useMapStore((state) => state.getPermission);
+  const onAppAwake = useMapStore((state) => state.onAppAwake);
+  const setState = useMapStore((state) => state.setState);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setState({ keyboardIsOpen: true });
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setState({ keyboardIsOpen: false });
+    });
+
+    const appSubscription = AppState.addEventListener("change", (state) => {
+      if (!useMapStore.getState().appIsActive && state === "active") {
+        onAppAwake();
+      }
+
+      setState({ appIsActive: state === "active" });
+    });
+
+    getPermission();
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      appSubscription.remove();
+    };
+  }, [getPermission, setState, onAppAwake]);
+
   if (!loaded) {
     return null;
   }
@@ -82,6 +115,7 @@ function RootLayoutNav() {
             },
           }}
         >
+          {!isDevice && <Debug />}
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: "modal" }} />

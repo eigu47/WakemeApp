@@ -1,9 +1,9 @@
-import { useEffect } from "react";
 import { setKey } from "react-geocode";
-import { Keyboard, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import MapAddress from "../../components/MapAddress";
+import MapAlarmButton from "../../components/MapAlarmButton";
 import MapCanvas from "../../components/MapCanvas";
 import MapDistance from "../../components/MapDistance";
 import MapGpsButton from "../../components/MapGpsButton";
@@ -12,31 +12,11 @@ import MapRadiusSlider from "../../components/MapRadiusSlider";
 import MapSearchBar from "../../components/MapSearchBar";
 import { View } from "../../components/Themed";
 import { COLORS, hexToRgb } from "../../constants/Colors";
-import { useMapStore } from "../../lib/mapStore";
 
 process.env.EXPO_PUBLIC_MAPS_API && setKey(process.env.EXPO_PUBLIC_MAPS_API);
 
 export default function TabOneScreen() {
-  const getPermission = useMapStore((state) => state.getPermission);
-  const setState = useMapStore((state) => state.setState);
-
   const inset = useSafeAreaInsets().top;
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setState({ keyboardIsOpen: true });
-    });
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setState({ keyboardIsOpen: false });
-    });
-
-    getPermission();
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [getPermission, setState]);
 
   return (
     <>
@@ -48,6 +28,7 @@ export default function TabOneScreen() {
             <MapSearchBar />
             <View style={styles.barButton}>
               <MapRadiusSlider />
+              <MapAlarmButton />
             </View>
           </View>
 
@@ -77,7 +58,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   bar: {
-    backgroundColor: hexToRgb(COLORS.background, 0.8),
+    backgroundColor: hexToRgb(COLORS.background, 0.6),
     paddingHorizontal: "5%",
     width: "100%",
     gap: 5,

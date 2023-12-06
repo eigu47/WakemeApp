@@ -49,8 +49,10 @@ type MapState = {
   followUser: boolean;
   distance?: number;
   mapRef: RefObject<MapView>;
+  appIsActive: boolean;
+  onAppAwake: () => void;
   alarm: boolean;
-  setAlarm: (isSet: boolean) => void;
+  switchAlarm: () => void;
   permissionDenied: boolean;
   getPermission: () => void;
   centerMap: (
@@ -63,7 +65,9 @@ type MapState = {
   onGPSButtonPress: () => void;
   changeView: (inset: number) => void;
   setState: (
-    state: Partial<Pick<MapState, "radius" | "keyboardIsOpen" | "followUser">>,
+    state: Partial<
+      Pick<MapState, "radius" | "keyboardIsOpen" | "followUser" | "appIsActive">
+    >,
   ) => void;
 };
 
@@ -78,16 +82,26 @@ export const useMapStore = create<MapState>()((set, get) => ({
   distance: undefined,
   mapRef: { current: null },
 
+  appIsActive: true,
+  onAppAwake: () => {
+    const { userLocation } = get();
+    if (!userLocation) return;
+
+    setUserAddress(userLocation, REFRESH_DISTANCE / 4).catch(console.error);
+  },
+
   alarm: false,
-  setAlarm: (alarm) => {
-    if (alarm) {
+  switchAlarm: () => {
+    const { alarm } = get();
+
+    if (!alarm) {
       checkDistance();
     } else {
       roundDistance = undefined;
       dismissAllNotificationsAsync().catch(console.error);
     }
 
-    set({ alarm });
+    set({ alarm: !alarm });
   },
 
   permissionDenied: false,
@@ -244,7 +258,7 @@ async function setSelectedAddress(latLng: LatLng) {
 }
 
 function checkDistance() {
-  const { userLocation, selectedLocation, radius, alarm } =
+  const { userLocation, selectedLocation, radius, alarm, selectedAddress } =
     useMapStore.getState();
   if (!userLocation || !selectedLocation) {
     useMapStore.setState({ distance: undefined });
@@ -262,24 +276,19 @@ function checkDistance() {
   }
 
   const rounded = Math.max(100, roundByMagnitude(distance));
-  if (roundDistance !== rounded) {
+  if (selectedAddress && roundDistance !== rounded) {
     roundDistance = rounded;
-    updateNotification(rounded).catch(console.error);
+
+    dismissAllNotificationsAsync().catch(console.error);
+    scheduleNotificationAsync({
+      content: {
+        title: `To: ${getStringAddress(selectedAddress)}`,
+        body: `You are within ${formatDistance(distance)} of your destination`,
+        sticky: true,
+      },
+      trigger: null,
+    }).catch(console.error);
+
+    // useDebugStore.setState({ roundDistance: rounded });
   }
-}
-
-async function updateNotification(distance: number) {
-  await dismissAllNotificationsAsync();
-
-  const { selectedAddress } = useMapStore.getState();
-  if (!selectedAddress) return;
-
-  await scheduleNotificationAsync({
-    content: {
-      title: `To: ${getStringAddress(selectedAddress)}`,
-      body: `You are within ${formatDistance(distance)} of your destination`,
-      sticky: true,
-    },
-    trigger: null,
-  });
 }

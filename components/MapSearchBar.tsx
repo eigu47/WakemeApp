@@ -13,7 +13,7 @@ import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
   const onSearchPlace = useMapStore((state) => state.onSearchPlace);
-  const isKeyboardOpen = useMapStore((state) => state.keyboardIsOpen);
+  const keyboardIsOpen = useMapStore((state) => state.keyboardIsOpen);
   const countryCode = useMapStore(
     (state) => state.userAddress?.[0]?.toLowerCase(),
   );
@@ -41,7 +41,7 @@ export default function MapSearchBar() {
             position: "relative",
           },
           textInput: {
-            backgroundColor: isKeyboardOpen
+            backgroundColor: keyboardIsOpen
               ? COLORS.foreground
               : hexToRgb(COLORS.foreground, 0.8),
             borderRadius: 10,
@@ -76,7 +76,7 @@ export default function MapSearchBar() {
       <Fontisto
         name="close"
         size={20}
-        style={[styles.clear, !isKeyboardOpen && { opacity: 0.2 }]}
+        style={[styles.clear, !keyboardIsOpen && { opacity: 0.2 }]}
         onPress={() => inputRef.current?.clear()}
       />
     </OutsidePress>
