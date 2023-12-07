@@ -10,6 +10,7 @@ import {
   centerMap,
   checkDistance,
   setSelectedAddress,
+  updateGeofencing,
   useMapStore,
 } from "../lib/mapStore";
 
@@ -59,6 +60,7 @@ function onCanvasLongPress(e: LongPressEvent) {
   centerMap(coords);
 
   checkDistance();
+  updateGeofencing().catch(console.error);
   setSelectedAddress(coords).catch(console.error);
 }
 

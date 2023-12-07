@@ -4,6 +4,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { isDevice } from "expo-device";
 import { useFonts } from "expo-font";
+import { startLocationUpdatesAsync } from "expo-location";
 import {
   setBackgroundColorAsync,
   setButtonStyleAsync,
@@ -18,7 +19,12 @@ import Debug from "../components/Debug";
 import { OutsidePressProvider } from "../components/OutsidePress";
 import { COLORS } from "../constants/Colors";
 import { REFRESH_DISTANCE } from "../constants/Maps";
-import { getPermission, setUserAddress, useMapStore } from "../lib/mapStore";
+import {
+  getPermission,
+  LOCATION,
+  setUserAddress,
+  useMapStore,
+} from "../lib/mapStore";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -77,6 +83,10 @@ export default function RootLayout() {
     });
 
     getPermission().catch(console.error);
+
+    startLocationUpdatesAsync(LOCATION, {
+      // deferredUpdatesDistance: 100,
+    }).catch(console.error);
 
     return () => {
       showSubscription.remove();

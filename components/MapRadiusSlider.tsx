@@ -10,7 +10,7 @@ import Animated, {
 import Slider from "@react-native-community/slider";
 
 import { COLORS } from "../constants/Colors";
-import { useMapStore } from "../lib/mapStore";
+import { updateGeofencing, useMapStore } from "../lib/mapStore";
 import { AnimatedPressable } from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 import { Text } from "./Themed";
@@ -72,6 +72,9 @@ export default function MapRadiusSlider() {
             value={radius}
             step={100}
             onValueChange={(radius) => useMapStore.setState({ radius })}
+            onSlidingComplete={() => {
+              updateGeofencing().catch(console.error);
+            }}
             style={[styles.slider]}
             thumbTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.primary}

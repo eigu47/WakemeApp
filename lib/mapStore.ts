@@ -8,14 +8,11 @@ import {
   GeofencingEventType,
   getBackgroundPermissionsAsync,
   hasStartedGeofencingAsync,
-  hasStartedLocationUpdatesAsync,
   PermissionStatus,
   requestBackgroundPermissionsAsync,
   requestForegroundPermissionsAsync,
   startGeofencingAsync,
-  startLocationUpdatesAsync,
   stopGeofencingAsync,
-  stopLocationUpdatesAsync,
   type LocationObject,
 } from "expo-location";
 import {
@@ -38,38 +35,37 @@ import {
   getDistance,
   getStringAddress,
   roundByMagnitude,
+  saveTest,
 } from "./helpers";
 
-let lastLocation: LatLng | undefined;
-let roundDistance: number | undefined;
-
-type MapState = {
+export const useMapStore = create<{
   userLocation?: LatLng;
   selectedLocation?: LatLng;
   userAddress?: Address;
   selectedAddress?: Address;
+  distance?: number;
   radius: number;
   keyboardIsOpen: boolean;
   followUser: boolean;
-  distance?: number;
   mapRef: RefObject<MapView>;
   appIsActive: boolean;
   alarm: boolean;
-};
-
-export const useMapStore = create<MapState>()(() => ({
+}>()(() => ({
   userLocation: undefined,
   selectedLocation: undefined,
   userAddress: undefined,
   selectedAddress: undefined,
+  distance: undefined,
   radius: INITIAL_RADIUS,
   keyboardIsOpen: false,
   followUser: true,
-  distance: undefined,
   mapRef: { current: null },
   appIsActive: true,
   alarm: false,
 }));
+
+let lastLocation: LatLng | undefined;
+let roundDistance: number | undefined;
 
 export async function setUserAddress(latLng: LatLng, refreshDistance: number) {
   if (!lastLocation || getDistance(lastLocation, latLng) > refreshDistance) {
@@ -77,7 +73,7 @@ export async function setUserAddress(latLng: LatLng, refreshDistance: number) {
     useMapStore.setState({ userAddress });
     lastLocation = latLng;
 
-    // saveTest(latLng, userAddress);
+    saveTest(latLng, userAddress);
   }
 }
 
@@ -138,16 +134,9 @@ export async function getPermission() {
   }
 }
 
-export async function switchAlarm() {
-  useMapStore.setState((alarm) => ({ alarm: !alarm }));
+export async function updateGeofencing() {
   const { alarm, selectedLocation, radius } = useMapStore.getState();
-
-  if (!alarm || !selectedLocation) {
-    await dismissAlert();
-    return;
-  }
-
-  checkDistance();
+  if (!alarm || !selectedLocation) return;
 
   const { granted } = await getBackgroundPermissionsAsync();
   if (!granted) {
@@ -167,15 +156,6 @@ export async function switchAlarm() {
       notifyOnExit: false,
     },
   ]);
-
-  const locationHasStarted = await hasStartedLocationUpdatesAsync(LOCATION);
-  if (locationHasStarted) {
-    await stopLocationUpdatesAsync(LOCATION);
-  }
-
-  await startLocationUpdatesAsync(LOCATION, {
-    // deferredUpdatesDistance: 100,
-  });
 }
 
 export function checkDistance() {
@@ -208,8 +188,6 @@ export function checkDistance() {
 
 const GEOFENCING = "geofencing-enter";
 defineTask<{ eventType: GeofencingEventType }>(GEOFENCING, ({ data }) => {
-  console.log(GEOFENCING, data);
-
   const { selectedAddress, radius, selectedLocation } = useMapStore.getState();
   if (
     data.eventType !== GeofencingEventType.Enter ||
@@ -254,9 +232,8 @@ defineTask<{ eventType: GeofencingEventType }>(GEOFENCING, ({ data }) => {
   useMapStore.setState({ alarm: false });
 });
 
-const LOCATION = "update-notification";
+export const LOCATION = "update-notification";
 defineTask<{ locations: LocationObject[] }>(LOCATION, ({ data }) => {
-  console.log(LOCATION, data);
   if (!data.locations[0]) return;
 
   const { latitude, longitude } = data.locations[0].coords;
@@ -287,16 +264,12 @@ async function latLngToAddress(latLng: LatLng) {
   return getAddress(components);
 }
 
-async function dismissAlert() {
+export async function dismissAlert() {
   roundDistance = undefined;
   Vibration.cancel();
   await dismissAllNotificationsAsync();
   const hasStarted = await hasStartedGeofencingAsync(GEOFENCING);
   if (hasStarted) {
     await stopGeofencingAsync(GEOFENCING);
-  }
-  const locationHasStarted = await hasStartedLocationUpdatesAsync(LOCATION);
-  if (locationHasStarted) {
-    await stopLocationUpdatesAsync(LOCATION);
   }
 }

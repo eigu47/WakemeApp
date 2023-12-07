@@ -99,8 +99,8 @@ export function saveTest(latLng: LatLng, address: Address) {
       address,
     });
   } else {
-    const totalDist = +(getDistance(latLng, first.latLng) * 1000);
-    const diffDist = +(getDistance(latLng, last.latLng) * 1000);
+    const totalDist = +getDistance(latLng, first.latLng);
+    const diffDist = +getDistance(latLng, last.latLng);
     const totalTime = +(
       (date.getTime() - first.date.getTime()) /
       (1000 * 60)

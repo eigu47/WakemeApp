@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS } from "../constants/Colors";
 import { formatDistance } from "../lib/helpers";
@@ -9,7 +8,7 @@ import { Text } from "./Themed";
 export default function MapDistance() {
   const distance = useMapStore((state) => state.distance);
   const radius = useMapStore((state) => state.radius);
-  const inset = useSafeAreaInsets().top;
+  // const inset = useSafeAreaInsets().top;
 
   if (!distance) return null;
 
