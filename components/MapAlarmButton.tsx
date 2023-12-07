@@ -1,12 +1,16 @@
 import { Pressable, StyleSheet } from "react-native";
 
 import { COLORS } from "../constants/Colors";
-import { dismissAlert, updateGeofencing, useAppStore } from "../lib/appStore";
-import { checkDistance, useMapStore } from "../lib/mapStore";
+import {
+  checkDistance,
+  dismissAlert,
+  updateGeofencing,
+  useMapStore,
+} from "../lib/mapStore";
 import { Text } from "./Themed";
 
 export default function MapAlarmButton() {
-  const alarm = useAppStore((state) => state.alarm);
+  const alarm = useMapStore((state) => state.alarm);
 
   return (
     <Pressable style={styles.container} onPress={switchAlarm}>
@@ -16,9 +20,8 @@ export default function MapAlarmButton() {
 }
 
 export function switchAlarm() {
-  useAppStore.setState((alarm) => ({ alarm: !alarm }));
-  const { selectedLocation } = useMapStore.getState();
-  const { alarm } = useAppStore.getState();
+  useMapStore.setState((alarm) => ({ alarm: !alarm }));
+  const { selectedLocation, alarm } = useMapStore.getState();
 
   if (!alarm || !selectedLocation) {
     dismissAlert().catch(console.error);

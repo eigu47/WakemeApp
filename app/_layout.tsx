@@ -19,8 +19,8 @@ import Debug from "../components/Debug";
 import { OutsidePressProvider } from "../components/OutsidePress";
 import { COLORS } from "../constants/Colors";
 import { REFRESH_DISTANCE } from "../constants/Maps";
-import { getPermission, LOCATION, useAppStore } from "../lib/appStore";
-import { setUserAddress, useMapStore } from "../lib/mapStore";
+import { getPermission, useAppStore } from "../lib/appStore";
+import { LOCATION, setUserAddress, useMapStore } from "../lib/mapStore";
 
 export {
   // Catch any errors thrown by the Layout component.

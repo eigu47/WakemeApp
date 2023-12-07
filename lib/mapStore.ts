@@ -1,21 +1,32 @@
 import { type RefObject } from "react";
 import { fromLatLng } from "react-geocode";
+import { Alert, Vibration } from "react-native";
 import type MapView from "react-native-maps";
 import { type LatLng } from "react-native-maps";
 
 import {
+  GeofencingEventType,
+  getBackgroundPermissionsAsync,
+  hasStartedGeofencingAsync,
+  startGeofencingAsync,
+  stopGeofencingAsync,
+  type LocationObject,
+} from "expo-location";
+import {
   dismissAllNotificationsAsync,
   scheduleNotificationAsync,
 } from "expo-notifications";
+import { defineTask } from "expo-task-manager";
 import { create } from "zustand";
 
 import {
   ANIMATE_CAMERA_DURATION,
   INITIAL_RADIUS,
   INITIAL_ZOOM,
+  REFRESH_DISTANCE,
 } from "../constants/Maps";
 import { type Address, type GeocodeResponse } from "../type/geocode";
-import { useAppStore } from "./appStore";
+import { getPermission, useAppStore } from "./appStore";
 import {
   formatDistance,
   getAddress,
@@ -24,6 +35,9 @@ import {
   roundByMagnitude,
   saveTest,
 } from "./helpers";
+
+let lastLocation: LatLng | undefined;
+let roundDistance: number | undefined;
 
 export const useMapStore = create<{
   userLocation?: LatLng;
@@ -34,8 +48,7 @@ export const useMapStore = create<{
   radius: number;
   followUser: boolean;
   mapRef: RefObject<MapView>;
-  lastLocation?: LatLng;
-  roundDistance?: number;
+  alarm: boolean;
 }>()(() => ({
   userLocation: undefined,
   selectedLocation: undefined,
@@ -45,12 +58,10 @@ export const useMapStore = create<{
   radius: INITIAL_RADIUS,
   followUser: true,
   mapRef: { current: null },
-  lastLocation: undefined,
-  roundDistance: undefined,
+  alarm: false,
 }));
 
 export async function setUserAddress(latLng: LatLng, refreshDistance: number) {
-  let { lastLocation } = useMapStore.getState();
   if (!lastLocation || getDistance(lastLocation, latLng) > refreshDistance) {
     const userAddress = await latLngToAddress(latLng);
     useMapStore.setState({ userAddress });
@@ -87,11 +98,11 @@ export function centerMap(
 }
 
 export function checkDistance() {
-  const { userLocation, selectedLocation, selectedAddress, roundDistance } =
+  const { userLocation, selectedLocation, selectedAddress, alarm } =
     useMapStore.getState();
-  const { alarm } = useAppStore.getState();
   if (!userLocation || !selectedLocation) {
-    useMapStore.setState({ distance: undefined, roundDistance: undefined });
+    useMapStore.setState({ distance: undefined });
+    roundDistance = undefined;
     return;
   }
 
@@ -101,7 +112,7 @@ export function checkDistance() {
   const rounded = Math.max(100, roundByMagnitude(distance));
   if (!selectedAddress || !alarm || roundDistance === rounded) return;
 
-  useMapStore.setState({ roundDistance: rounded });
+  roundDistance = rounded;
 
   dismissAllNotificationsAsync().catch(console.error);
   scheduleNotificationAsync({
@@ -123,4 +134,106 @@ async function latLngToAddress(latLng: LatLng) {
   const components = results[0]?.address_components;
   if (!components) throw new Error("No address found");
   return getAddress(components);
+}
+
+export async function updateGeofencing() {
+  const { selectedLocation, radius, alarm } = useMapStore.getState();
+  if (!alarm || !selectedLocation) return;
+
+  const { granted } = await getBackgroundPermissionsAsync();
+  if (!granted) {
+    await getPermission();
+  }
+
+  const geofencingHasStarted = await hasStartedGeofencingAsync(GEOFENCING);
+  if (geofencingHasStarted) {
+    await stopGeofencingAsync(GEOFENCING);
+  }
+
+  await startGeofencingAsync(GEOFENCING, [
+    {
+      ...selectedLocation,
+      radius,
+      notifyOnEnter: true,
+      notifyOnExit: false,
+    },
+  ]);
+}
+
+const GEOFENCING = "geofencing-enter";
+defineTask<{ eventType: GeofencingEventType }>(GEOFENCING, ({ data }) => {
+  const { selectedAddress, radius, selectedLocation } = useMapStore.getState();
+  if (
+    data.eventType !== GeofencingEventType.Enter ||
+    !selectedAddress ||
+    !selectedLocation
+  )
+    return;
+
+  dismissAllNotificationsAsync().catch(console.error);
+  scheduleNotificationAsync({
+    content: {
+      title: `To: ${getStringAddress(selectedAddress)}`,
+      body: `You are within ${formatDistance(radius)} of your destination`,
+      sticky: true,
+    },
+    trigger: null,
+  }).catch(console.error);
+  centerMap(selectedLocation);
+
+  Vibration.vibrate([1000, 1000], true);
+  Alert.alert(
+    "You have arrived!",
+    `You are at ${formatDistance(
+      radius,
+    )} of your destination ${getStringAddress(selectedAddress)}`,
+    [
+      {
+        text: "OK",
+        onPress: () => {
+          dismissAlert().catch(console.error);
+        },
+      },
+    ],
+    {
+      cancelable: true,
+      onDismiss: () => {
+        dismissAlert().catch(console.error);
+      },
+    },
+  );
+
+  useMapStore.setState({ alarm: false });
+});
+
+export const LOCATION = "update-notification";
+defineTask<{ locations: LocationObject[] }>(LOCATION, ({ data }) => {
+  if (!data.locations[0]) return;
+
+  const { latitude, longitude } = data.locations[0].coords;
+  const latLng = { latitude, longitude };
+
+  useMapStore.setState({ userLocation: latLng });
+  checkDistance();
+
+  const { followUser } = useMapStore.getState();
+  const { appIsActive } = useAppStore.getState();
+
+  if (followUser) {
+    centerMap(latLng);
+  }
+
+  if (appIsActive) {
+    setUserAddress(latLng, REFRESH_DISTANCE).catch(console.error);
+  }
+});
+
+export async function dismissAlert() {
+  roundDistance = undefined;
+  Vibration.cancel();
+  await dismissAllNotificationsAsync();
+  const hasStarted = await hasStartedGeofencingAsync(GEOFENCING);
+  if (hasStarted) {
+    await stopGeofencingAsync(GEOFENCING);
+  }
 }
