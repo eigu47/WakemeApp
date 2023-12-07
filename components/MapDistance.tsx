@@ -9,13 +9,15 @@ import { Text } from "./Themed";
 export default function MapDistance() {
   const distance = useMapStore((state) => state.distance);
   const radius = useMapStore((state) => state.radius);
-  const changeView = useMapStore((state) => state.changeView);
   const inset = useSafeAreaInsets().top;
 
   if (!distance) return null;
 
   return (
-    <Pressable style={styles.container} onPress={() => changeView(inset)}>
+    <Pressable
+      style={styles.container}
+      //  onPress={() => changeView(inset)}
+    >
       <Text style={styles.text}>Destination: {formatDistance(distance)}</Text>
       <Text style={styles.text}>
         In range: {formatDistance(distance - radius)}

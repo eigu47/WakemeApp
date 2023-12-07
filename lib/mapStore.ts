@@ -1,27 +1,32 @@
 import { type RefObject } from "react";
-import { fromLatLng, fromPlaceId } from "react-geocode";
-import { Alert, Linking } from "react-native";
-import { type GooglePlaceData } from "react-native-google-places-autocomplete";
+import { fromLatLng } from "react-geocode";
+import { Alert, Linking, Vibration } from "react-native";
 import type MapView from "react-native-maps";
-import {
-  type LatLng,
-  type LongPressEvent,
-  type UserLocationChangeEvent,
-} from "react-native-maps";
+import { type LatLng } from "react-native-maps";
 
 import {
+  GeofencingEventType,
+  getBackgroundPermissionsAsync,
+  hasStartedGeofencingAsync,
+  hasStartedLocationUpdatesAsync,
   PermissionStatus,
+  requestBackgroundPermissionsAsync,
   requestForegroundPermissionsAsync,
+  startGeofencingAsync,
+  startLocationUpdatesAsync,
+  stopGeofencingAsync,
+  stopLocationUpdatesAsync,
+  type LocationObject,
 } from "expo-location";
 import {
   dismissAllNotificationsAsync,
   scheduleNotificationAsync,
 } from "expo-notifications";
+import { defineTask } from "expo-task-manager";
 import { create } from "zustand";
 
 import {
   ANIMATE_CAMERA_DURATION,
-  BAR_HEIGHT,
   INITIAL_RADIUS,
   INITIAL_ZOOM,
   REFRESH_DISTANCE,
@@ -36,8 +41,6 @@ import {
 } from "./helpers";
 
 let lastLocation: LatLng | undefined;
-let viewBoth = true;
-let userZoom: number | undefined;
 let roundDistance: number | undefined;
 
 type MapState = {
@@ -51,28 +54,10 @@ type MapState = {
   distance?: number;
   mapRef: RefObject<MapView>;
   appIsActive: boolean;
-  onAppAwake: () => void;
   alarm: boolean;
-  switchAlarm: () => void;
-  permissionDenied: boolean;
-  getPermission: () => void;
-  centerMap: (
-    latLng: LatLng,
-    options?: { duration?: number; zoom?: number },
-  ) => void;
-  onSearchPlace: (e: GooglePlaceData) => Promise<void>;
-  onUserChangeLocation: (e: UserLocationChangeEvent) => void;
-  onCanvasLongPress: (e: LongPressEvent) => void;
-  onGPSButtonPress: () => void;
-  changeView: (inset: number) => void;
-  setState: (
-    state: Partial<
-      Pick<MapState, "radius" | "keyboardIsOpen" | "followUser" | "appIsActive">
-    >,
-  ) => void;
 };
 
-export const useMapStore = create<MapState>()((set, get) => ({
+export const useMapStore = create<MapState>()(() => ({
   userLocation: undefined,
   selectedLocation: undefined,
   userAddress: undefined,
@@ -82,167 +67,214 @@ export const useMapStore = create<MapState>()((set, get) => ({
   followUser: true,
   distance: undefined,
   mapRef: { current: null },
-
   appIsActive: true,
-  onAppAwake: () => {
-    const { userLocation } = get();
-    if (!userLocation) return;
-
-    setUserAddress(userLocation, REFRESH_DISTANCE / 4).catch(console.error);
-  },
-
   alarm: false,
-  switchAlarm: () => {
-    const { alarm } = get();
-
-    if (!alarm) {
-      checkDistance();
-    } else {
-      roundDistance = undefined;
-      dismissAllNotificationsAsync().catch(console.error);
-    }
-
-    set({ alarm: !alarm });
-  },
-
-  permissionDenied: false,
-  getPermission: () => {
-    requestForegroundPermissionsAsync()
-      .then(({ status }) => {
-        if (status !== PermissionStatus.GRANTED) {
-          Alert.alert(
-            "Permission Error",
-            "Please enable location permissions in settings",
-            [
-              {
-                text: "Settings",
-                onPress: () => {
-                  Linking.openSettings().catch(console.error);
-                },
-              },
-              { text: "Cancel" },
-              { text: "Try again", onPress: get().getPermission },
-            ],
-          );
-        }
-      })
-      .catch((e) => console.error(e));
-  },
-
-  centerMap: (
-    latLng,
-    { duration, zoom } = { duration: ANIMATE_CAMERA_DURATION, zoom: undefined },
-  ) => {
-    const { mapRef } = get();
-    mapRef.current
-      ?.getCamera()
-      .then(({ zoom: cameraZoom = 0 }) => {
-        mapRef.current?.animateCamera(
-          { center: latLng, zoom: cameraZoom < 11 ? INITIAL_ZOOM : zoom },
-          { duration },
-        );
-      })
-      .catch((e) => {
-        console.error(e);
-        mapRef.current?.animateCamera({ center: latLng, zoom }, { duration });
-      });
-  },
-
-  onSearchPlace: async (e) => {
-    const { centerMap } = get();
-    const { results } = (await fromPlaceId(e.place_id)) as GeocodeResponse;
-    const result = results[0];
-    if (!result) return;
-
-    const latLng = {
-      latitude: result.geometry.location.lat,
-      longitude: result.geometry.location.lng,
-    };
-
-    centerMap(latLng);
-    set({ selectedLocation: latLng });
-    set({ selectedAddress: getAddress(result.address_components) });
-    checkDistance();
-  },
-
-  onUserChangeLocation: (e) => {
-    const { centerMap, followUser } = get();
-    const coords = e.nativeEvent.coordinate;
-    if (!coords) return;
-    const latLng = {
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-    };
-
-    set({ userLocation: latLng });
-    checkDistance();
-
-    if (followUser) {
-      centerMap(latLng);
-    }
-
-    setUserAddress(latLng, REFRESH_DISTANCE).catch(console.error);
-  },
-
-  onCanvasLongPress: (e) => {
-    const { centerMap } = get();
-    const coords = e.nativeEvent.coordinate;
-    if (!coords) return;
-
-    set({ selectedLocation: coords });
-    centerMap(coords);
-
-    checkDistance();
-    setSelectedAddress(coords).catch(console.error);
-  },
-
-  onGPSButtonPress: () => {
-    const { userLocation, getPermission, centerMap } = get();
-    if (!userLocation) {
-      getPermission();
-      return;
-    }
-
-    centerMap(userLocation);
-    setUserAddress(userLocation, REFRESH_DISTANCE / 4).catch(console.error);
-    set({ followUser: true });
-  },
-
-  changeView: (inset) => {
-    const { selectedLocation, userLocation, mapRef, centerMap } = get();
-    if (!userLocation && selectedLocation) {
-      centerMap(selectedLocation);
-    }
-
-    if (userLocation && selectedLocation) {
-      if (viewBoth) {
-        mapRef.current
-          ?.getCamera()
-          .then(({ zoom }) => (userZoom = zoom))
-          .catch(console.error);
-
-        mapRef?.current?.fitToCoordinates([selectedLocation, userLocation], {
-          edgePadding: {
-            top: inset + BAR_HEIGHT + 50,
-            right: 50,
-            bottom: 50,
-            left: 50,
-          },
-          animated: true,
-        });
-        viewBoth = false;
-        return;
-      }
-
-      if (!viewBoth) {
-        centerMap(selectedLocation, { zoom: userZoom });
-        viewBoth = true;
-      }
-    }
-  },
-
-  setState: (state) => set(state),
 }));
+
+export async function setUserAddress(latLng: LatLng, refreshDistance: number) {
+  if (!lastLocation || getDistance(lastLocation, latLng) > refreshDistance) {
+    const userAddress = await latLngToAddress(latLng);
+    useMapStore.setState({ userAddress });
+    lastLocation = latLng;
+
+    // saveTest(latLng, userAddress);
+  }
+}
+
+export async function setSelectedAddress(latLng: LatLng) {
+  const selectedAddress = await latLngToAddress(latLng);
+  useMapStore.setState({ selectedAddress });
+}
+
+export function centerMap(
+  latLng: LatLng,
+  { duration, zoom }: { duration?: number; zoom?: number } = {
+    duration: ANIMATE_CAMERA_DURATION,
+  },
+) {
+  const { mapRef } = useMapStore.getState();
+  mapRef.current
+    ?.getCamera()
+    .then(({ zoom: cameraZoom = 0 }) => {
+      mapRef.current?.animateCamera(
+        { center: latLng, zoom: cameraZoom < 11 ? INITIAL_ZOOM : zoom },
+        { duration },
+      );
+    })
+    .catch((e) => {
+      console.error(e);
+      mapRef.current?.animateCamera({ center: latLng, zoom }, { duration });
+    });
+}
+
+export async function getPermission() {
+  const { status: foregroundStatus } =
+    await requestForegroundPermissionsAsync();
+  const { status: backgroundStatus } =
+    await requestBackgroundPermissionsAsync();
+  if (
+    foregroundStatus !== PermissionStatus.GRANTED ||
+    backgroundStatus !== PermissionStatus.GRANTED
+  ) {
+    Alert.alert(
+      "Permission Error",
+      "Please enable location permissions in settings",
+      [
+        {
+          text: "Settings",
+          onPress: () => {
+            Linking.openSettings().catch(console.error);
+          },
+        },
+        { text: "Cancel" },
+        {
+          text: "Try again",
+          onPress: () => {
+            getPermission().catch(console.error);
+          },
+        },
+      ],
+    );
+  }
+}
+
+export async function switchAlarm() {
+  useMapStore.setState((alarm) => ({ alarm: !alarm }));
+  const { alarm, selectedLocation, radius } = useMapStore.getState();
+
+  if (!alarm || !selectedLocation) {
+    await dismissAlert();
+    return;
+  }
+
+  checkDistance();
+
+  const { granted } = await getBackgroundPermissionsAsync();
+  if (!granted) {
+    await getPermission();
+  }
+
+  const geofencingHasStarted = await hasStartedGeofencingAsync(GEOFENCING);
+  if (geofencingHasStarted) {
+    await stopGeofencingAsync(GEOFENCING);
+  }
+
+  await startGeofencingAsync(GEOFENCING, [
+    {
+      ...selectedLocation,
+      radius,
+      notifyOnEnter: true,
+      notifyOnExit: false,
+    },
+  ]);
+
+  const locationHasStarted = await hasStartedLocationUpdatesAsync(LOCATION);
+  if (locationHasStarted) {
+    await stopLocationUpdatesAsync(LOCATION);
+  }
+
+  await startLocationUpdatesAsync(LOCATION, {
+    // deferredUpdatesDistance: 100,
+  });
+}
+
+export function checkDistance() {
+  const { userLocation, selectedLocation, selectedAddress, alarm } =
+    useMapStore.getState();
+  if (!userLocation || !selectedLocation) {
+    useMapStore.setState({ distance: undefined });
+    roundDistance = undefined;
+    return;
+  }
+
+  const distance = getDistance(userLocation, selectedLocation);
+  useMapStore.setState({ distance });
+
+  const rounded = Math.max(100, roundByMagnitude(distance));
+  if (!selectedAddress || !alarm || roundDistance === rounded) return;
+
+  roundDistance = rounded;
+
+  dismissAllNotificationsAsync().catch(console.error);
+  scheduleNotificationAsync({
+    content: {
+      title: `To: ${getStringAddress(selectedAddress)}`,
+      body: `You are within ${formatDistance(distance)} of your destination`,
+      sticky: true,
+    },
+    trigger: null,
+  }).catch(console.error);
+}
+
+const GEOFENCING = "geofencing-enter";
+defineTask<{ eventType: GeofencingEventType }>(GEOFENCING, ({ data }) => {
+  console.log(GEOFENCING, data);
+
+  const { selectedAddress, radius, selectedLocation } = useMapStore.getState();
+  if (
+    data.eventType !== GeofencingEventType.Enter ||
+    !selectedAddress ||
+    !selectedLocation
+  )
+    return;
+
+  dismissAllNotificationsAsync().catch(console.error);
+  scheduleNotificationAsync({
+    content: {
+      title: `To: ${getStringAddress(selectedAddress)}`,
+      body: `You are within ${formatDistance(radius)} of your destination`,
+      sticky: true,
+    },
+    trigger: null,
+  }).catch(console.error);
+  centerMap(selectedLocation);
+
+  Vibration.vibrate([1000, 1000], true);
+  Alert.alert(
+    "You have arrived!",
+    `You are at ${formatDistance(
+      radius,
+    )} of your destination ${getStringAddress(selectedAddress)}`,
+    [
+      {
+        text: "OK",
+        onPress: () => {
+          dismissAlert().catch(console.error);
+        },
+      },
+    ],
+    {
+      cancelable: true,
+      onDismiss: () => {
+        dismissAlert().catch(console.error);
+      },
+    },
+  );
+
+  useMapStore.setState({ alarm: false });
+});
+
+const LOCATION = "update-notification";
+defineTask<{ locations: LocationObject[] }>(LOCATION, ({ data }) => {
+  console.log(LOCATION, data);
+  if (!data.locations[0]) return;
+
+  const { latitude, longitude } = data.locations[0].coords;
+  const latLng = { latitude, longitude };
+
+  useMapStore.setState({ userLocation: latLng });
+  checkDistance();
+
+  const { followUser, appIsActive } = useMapStore.getState();
+
+  if (followUser) {
+    centerMap(latLng);
+  }
+
+  if (appIsActive) {
+    setUserAddress(latLng, REFRESH_DISTANCE).catch(console.error);
+  }
+});
 
 async function latLngToAddress(latLng: LatLng) {
   const { results } = (await fromLatLng(
@@ -255,63 +287,16 @@ async function latLngToAddress(latLng: LatLng) {
   return getAddress(components);
 }
 
-async function setUserAddress(latLng: LatLng, refreshDistance: number) {
-  if (!lastLocation || getDistance(lastLocation, latLng) > refreshDistance) {
-    const userAddress = await latLngToAddress(latLng);
-    useMapStore.setState({ userAddress });
-    lastLocation = latLng;
-
-    // saveTest(latLng, userAddress);
+async function dismissAlert() {
+  roundDistance = undefined;
+  Vibration.cancel();
+  await dismissAllNotificationsAsync();
+  const hasStarted = await hasStartedGeofencingAsync(GEOFENCING);
+  if (hasStarted) {
+    await stopGeofencingAsync(GEOFENCING);
   }
-}
-
-async function setSelectedAddress(latLng: LatLng) {
-  const selectedAddress = await latLngToAddress(latLng);
-  useMapStore.setState({ selectedAddress });
-}
-
-function checkDistance() {
-  const { userLocation, selectedLocation, radius, alarm, selectedAddress } =
-    useMapStore.getState();
-  if (!userLocation || !selectedLocation) {
-    useMapStore.setState({ distance: undefined });
-    roundDistance = undefined;
-    return;
-  }
-
-  const distance = getDistance(userLocation, selectedLocation);
-  useMapStore.setState({ distance });
-
-  if (!alarm || !selectedAddress) return;
-
-  if (distance < radius) {
-    dismissAllNotificationsAsync().catch(console.error);
-    scheduleNotificationAsync({
-      content: {
-        title: `To: ${getStringAddress(selectedAddress)}`,
-        body: `You are within ${formatDistance(radius)} of your destination`,
-        sticky: true,
-      },
-      trigger: null,
-    }).catch(console.error);
-
-    return;
-  }
-
-  const rounded = Math.max(100, roundByMagnitude(distance));
-  if (roundDistance !== rounded) {
-    roundDistance = rounded;
-
-    dismissAllNotificationsAsync().catch(console.error);
-    scheduleNotificationAsync({
-      content: {
-        title: `To: ${getStringAddress(selectedAddress)}`,
-        body: `You are within ${formatDistance(distance)} of your destination`,
-        sticky: true,
-      },
-      trigger: null,
-    }).catch(console.error);
-
-    // useDebugStore.setState({ roundDistance: rounded });
+  const locationHasStarted = await hasStartedLocationUpdatesAsync(LOCATION);
+  if (locationHasStarted) {
+    await stopLocationUpdatesAsync(LOCATION);
   }
 }

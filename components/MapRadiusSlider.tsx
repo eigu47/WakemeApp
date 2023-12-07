@@ -17,7 +17,6 @@ import { Text } from "./Themed";
 
 export default function MapRadiusSlider() {
   const radius = useMapStore((state) => state.radius);
-  const setState = useMapStore((state) => state.setState);
 
   const [isShow, setIsShow] = useState(false);
   const animate = useSharedValue(0);
@@ -72,7 +71,7 @@ export default function MapRadiusSlider() {
             maximumValue={5000}
             value={radius}
             step={100}
-            onValueChange={(radius) => setState({ radius })}
+            onValueChange={(radius) => useMapStore.setState({ radius })}
             style={[styles.slider]}
             thumbTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.primary}

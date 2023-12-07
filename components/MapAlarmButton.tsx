@@ -6,10 +6,15 @@ import { Text } from "./Themed";
 
 export default function MapAlarmButton() {
   const alarm = useMapStore((state) => state.alarm);
-  const setAlarm = useMapStore((state) => state.switchAlarm);
+  const switchAlarm = useMapStore((state) => state.switchAlarm);
 
   return (
-    <Pressable style={styles.container} onPress={setAlarm}>
+    <Pressable
+      style={styles.container}
+      onPress={() => {
+        switchAlarm().catch(console.error);
+      }}
+    >
       <Text style={styles.text}>Alarm: {alarm ? "ON" : "OFF"}</Text>
     </Pressable>
   );

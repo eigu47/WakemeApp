@@ -17,7 +17,8 @@ import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import Debug from "../components/Debug";
 import { OutsidePressProvider } from "../components/OutsidePress";
 import { COLORS } from "../constants/Colors";
-import { useMapStore } from "../lib/mapStore";
+import { REFRESH_DISTANCE } from "../constants/Maps";
+import { getPermission, setUserAddress, useMapStore } from "../lib/mapStore";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -59,34 +60,30 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  const getPermission = useMapStore((state) => state.getPermission);
-  const onAppAwake = useMapStore((state) => state.onAppAwake);
-  const setState = useMapStore((state) => state.setState);
-
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setState({ keyboardIsOpen: true });
+      useMapStore.setState({ keyboardIsOpen: true });
     });
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setState({ keyboardIsOpen: false });
+      useMapStore.setState({ keyboardIsOpen: false });
     });
 
     const appSubscription = AppState.addEventListener("change", (state) => {
       if (!useMapStore.getState().appIsActive && state === "active") {
-        onAppAwake();
+        onAppAwake().catch(console.error);
       }
 
-      setState({ appIsActive: state === "active" });
+      useMapStore.setState({ appIsActive: state === "active" });
     });
 
-    getPermission();
+    getPermission().catch(console.error);
 
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
       appSubscription.remove();
     };
-  }, [getPermission, setState, onAppAwake]);
+  }, []);
 
   if (!loaded) {
     return null;
@@ -124,4 +121,11 @@ function RootLayoutNav() {
       </SafeAreaProvider>
     </OutsidePressProvider>
   );
+}
+
+async function onAppAwake() {
+  const { userLocation } = useMapStore.getState();
+  if (userLocation) {
+    await setUserAddress(userLocation, REFRESH_DISTANCE / 4);
+  }
 }

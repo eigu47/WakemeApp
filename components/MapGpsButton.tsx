@@ -3,20 +3,24 @@ import { StyleSheet } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
-import { useMapStore } from "../lib/mapStore";
+import { REFRESH_DISTANCE } from "../constants/Maps";
+import {
+  centerMap,
+  getPermission,
+  setUserAddress,
+  useMapStore,
+} from "../lib/mapStore";
 import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapGpsButton() {
   const followUser = useMapStore((state) => state.followUser);
-  const setState = useMapStore((state) => state.setState);
-  const onGPSButtonPress = useMapStore((state) => state.onGPSButtonPress);
 
   return (
     <AnimatedButton onPress={onGPSButtonPress} style={styles.button}>
       <OutsidePress
         id="gps"
-        onOutsidePress={() => setState({ followUser: false })}
+        onOutsidePress={() => useMapStore.setState({ followUser: false })}
       >
         <MaterialIcons
           name="gps-fixed"
@@ -26,6 +30,18 @@ export default function MapGpsButton() {
       </OutsidePress>
     </AnimatedButton>
   );
+}
+
+function onGPSButtonPress() {
+  const { userLocation } = useMapStore.getState();
+  if (!userLocation) {
+    getPermission().catch(console.error);
+    return;
+  }
+
+  centerMap(userLocation);
+  setUserAddress(userLocation, REFRESH_DISTANCE / 4).catch(console.error);
+  useMapStore.setState({ followUser: true });
 }
 
 const styles = StyleSheet.create({

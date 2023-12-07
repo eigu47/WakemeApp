@@ -1,15 +1,20 @@
 import { StyleSheet } from "react-native";
-import MapView, { Circle, Marker } from "react-native-maps";
+import MapView, {
+  Circle,
+  Marker,
+  type LongPressEvent,
+} from "react-native-maps";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { useMapStore } from "../lib/mapStore";
+import {
+  centerMap,
+  checkDistance,
+  setSelectedAddress,
+  useMapStore,
+} from "../lib/mapStore";
 
 export default function MapCanvas() {
   const mapRef = useMapStore((state) => state.mapRef);
-  const onCanvasLongPress = useMapStore((state) => state.onCanvasLongPress);
-  const onUserChangeLocation = useMapStore(
-    (state) => state.onUserChangeLocation,
-  );
 
   return (
     <MapView
@@ -17,7 +22,7 @@ export default function MapCanvas() {
       style={styles.map}
       onLongPress={onCanvasLongPress}
       showsUserLocation
-      onUserLocationChange={onUserChangeLocation}
+      // onUserLocationChange={onUserChangeLocation}
       followsUserLocation
       rotateEnabled={false}
       toolbarEnabled={false}
@@ -45,6 +50,33 @@ function SelectedMarker() {
     </>
   );
 }
+
+function onCanvasLongPress(e: LongPressEvent) {
+  const coords = e.nativeEvent.coordinate;
+  if (!coords) return;
+
+  useMapStore.setState({ selectedLocation: coords });
+  centerMap(coords);
+
+  checkDistance();
+  setSelectedAddress(coords).catch(console.error);
+}
+
+// function onUserChangeLocation(e: UserLocationChangeEvent) {
+//   const { followUser } = get();
+//   const coords = e.nativeEvent.coordinate;
+//   if (!coords) return;
+//   const latLng = {
+//     latitude: coords.latitude,
+//     longitude: coords.longitude,
+//   };
+//   set({ userLocation: latLng });
+//   checkDistance();
+//   if (followUser) {
+//     centerMap(latLng);
+//   }
+//   setUserAddress(latLng, REFRESH_DISTANCE).catch(console.error);
+// }
 
 const styles = StyleSheet.create({
   map: {

@@ -1,18 +1,21 @@
 import { useRef, useState } from "react";
+import { fromPlaceId } from "react-geocode";
 import { Keyboard, StyleSheet } from "react-native";
 import {
   GooglePlacesAutocomplete,
+  type GooglePlaceData,
   type GooglePlacesAutocompleteRef,
 } from "react-native-google-places-autocomplete";
 
 import { Fontisto } from "@expo/vector-icons";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
-import { useMapStore } from "../lib/mapStore";
+import { getAddress } from "../lib/helpers";
+import { centerMap, checkDistance, useMapStore } from "../lib/mapStore";
+import { type GeocodeResponse } from "../type/geocode";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const onSearchPlace = useMapStore((state) => state.onSearchPlace);
   const keyboardIsOpen = useMapStore((state) => state.keyboardIsOpen);
   const countryCode = useMapStore(
     (state) => state.userAddress?.[0]?.toLowerCase(),
@@ -80,6 +83,24 @@ export default function MapSearchBar() {
       />
     </OutsidePress>
   );
+}
+
+async function onSearchPlace(e: GooglePlaceData) {
+  const { results } = (await fromPlaceId(e.place_id)) as GeocodeResponse;
+  const result = results[0];
+  if (!result) return;
+
+  const latLng = {
+    latitude: result.geometry.location.lat,
+    longitude: result.geometry.location.lng,
+  };
+
+  centerMap(latLng);
+  useMapStore.setState({ selectedLocation: latLng });
+  useMapStore.setState({
+    selectedAddress: getAddress(result.address_components),
+  });
+  checkDistance();
 }
 
 const styles = StyleSheet.create({
