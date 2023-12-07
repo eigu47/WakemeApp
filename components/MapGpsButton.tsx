@@ -4,12 +4,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 import { COLORS } from "../constants/Colors";
 import { REFRESH_DISTANCE } from "../constants/Maps";
-import {
-  centerMap,
-  getPermission,
-  setUserAddress,
-  useMapStore,
-} from "../lib/mapStore";
+import { getPermission } from "../lib/appStore";
+import { centerMap, setUserAddress, useMapStore } from "../lib/mapStore";
 import AnimatedButton from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 

@@ -10,7 +10,8 @@ import Animated, {
 import Slider from "@react-native-community/slider";
 
 import { COLORS } from "../constants/Colors";
-import { updateGeofencing, useMapStore } from "../lib/mapStore";
+import { updateGeofencing } from "../lib/appStore";
+import { useMapStore } from "../lib/mapStore";
 import { AnimatedPressable } from "./AnimatedButton";
 import { OutsidePress } from "./OutsidePress";
 import { Text } from "./Themed";

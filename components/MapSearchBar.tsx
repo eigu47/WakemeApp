@@ -10,13 +10,14 @@ import {
 import { Fontisto } from "@expo/vector-icons";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
+import { useAppStore } from "../lib/appStore";
 import { getAddress } from "../lib/helpers";
 import { centerMap, checkDistance, useMapStore } from "../lib/mapStore";
 import { type GeocodeResponse } from "../type/geocode";
 import { OutsidePress } from "./OutsidePress";
 
 export default function MapSearchBar() {
-  const keyboardIsOpen = useMapStore((state) => state.keyboardIsOpen);
+  const keyboardIsOpen = useAppStore((state) => state.keyboardIsOpen);
   const countryCode = useMapStore(
     (state) => state.userAddress?.[0]?.toLowerCase(),
   );

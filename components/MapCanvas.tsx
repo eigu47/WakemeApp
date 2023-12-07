@@ -6,11 +6,11 @@ import MapView, {
 } from "react-native-maps";
 
 import { COLORS, hexToRgb } from "../constants/Colors";
+import { updateGeofencing } from "../lib/appStore";
 import {
   centerMap,
   checkDistance,
   setSelectedAddress,
-  updateGeofencing,
   useMapStore,
 } from "../lib/mapStore";
 

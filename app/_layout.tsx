@@ -19,12 +19,8 @@ import Debug from "../components/Debug";
 import { OutsidePressProvider } from "../components/OutsidePress";
 import { COLORS } from "../constants/Colors";
 import { REFRESH_DISTANCE } from "../constants/Maps";
-import {
-  getPermission,
-  LOCATION,
-  setUserAddress,
-  useMapStore,
-} from "../lib/mapStore";
+import { getPermission, LOCATION, useAppStore } from "../lib/appStore";
+import { setUserAddress, useMapStore } from "../lib/mapStore";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -68,18 +64,18 @@ export default function RootLayout() {
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      useMapStore.setState({ keyboardIsOpen: true });
+      useAppStore.setState({ keyboardIsOpen: true });
     });
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      useMapStore.setState({ keyboardIsOpen: false });
+      useAppStore.setState({ keyboardIsOpen: false });
     });
 
     const appSubscription = AppState.addEventListener("change", (state) => {
-      if (!useMapStore.getState().appIsActive && state === "active") {
+      if (!useAppStore.getState().appIsActive && state === "active") {
         onAppAwake().catch(console.error);
       }
 
-      useMapStore.setState({ appIsActive: state === "active" });
+      useAppStore.setState({ appIsActive: state === "active" });
     });
 
     getPermission().catch(console.error);
